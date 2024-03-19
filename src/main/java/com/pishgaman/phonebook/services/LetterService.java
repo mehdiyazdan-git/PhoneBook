@@ -7,10 +7,13 @@ import com.pishgaman.phonebook.entities.Year;
 import com.pishgaman.phonebook.enums.LetterState;
 import com.pishgaman.phonebook.mappers.LetterMapper;
 import com.pishgaman.phonebook.repositories.LetterRepository;
+import com.pishgaman.phonebook.repositories.LetterSearchDao;
 import com.pishgaman.phonebook.repositories.YearRepository;
+import com.pishgaman.phonebook.searchforms.LetterSearch;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -18,37 +21,37 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class LetterService {
     private final LetterRepository letterRepository;
     private final LetterMapper letterMapper;
     private final SenderService senderService;
-    private final RecipientService recipientService;
+    private final CustomerService customerService;
     private final YearRepository yearRepository;
-
-
-    @Autowired
-    public LetterService(LetterRepository letterRepository,
-                         LetterMapper letterMapper,
-                         SenderService senderService,
-                         RecipientService recipientService, YearRepository yearRepository) {
-        this.letterRepository = letterRepository;
-        this.letterMapper = letterMapper;
-        this.senderService = senderService;
-        this.recipientService = recipientService;
-        this.yearRepository = yearRepository;
-    }
+    private final LetterSearchDao letterSearchDao;
+    private final CompanyService companyService;
 
     public List<LetterDto> getAllLetters() {
         List<Letter> letters = letterRepository.findAll();
         return letters.stream().map(letterMapper::toDto).collect(Collectors.toList());
     }
-    public List<LetterDetailsDto> getLetterDetails() {
-        return letterRepository.findLetterDetails();
-    }
 
-    public List<LetterDetailsDto> findLetterDetailsBySenderId(Long senderId) {
-        return letterRepository.findLetterDetailsBySenderId(senderId);
+    public Page<LetterDetailsDto> findAllLetterDetails(
+            LetterSearch search,
+            Integer page,
+            Integer size,
+            String sortBy,
+            String order
+    ) {
+        return letterSearchDao.findAllBySimpleQuery(search,page,size,sortBy,order);
     }
+//    public List<LetterDetailsDto> getLetterDetails() {
+//        return letterRepository.findLetterDetails();
+//    }
+
+//    public List<LetterDetailsDto> findLetterDetailsBySenderId(Long senderId) {
+//        return letterRepository.findLetterDetailsBySenderId(senderId);
+//    }
 
     public LetterDto getLetterById(Long letterId) {
         Letter letter = findLetterById(letterId);
@@ -57,36 +60,36 @@ public class LetterService {
     @Transactional
     public void createLetter(LetterDto letterDto) {
         Year year = this.getYear(letterDto.getYearId());
-        String letterNumber = this.generateLetterNumber(letterDto.getSenderId(), year.getName());
+        String letterNumber = this.generateLetterNumber(letterDto.getCompanyId(), year.getName());
 
-        if (senderService.existById(letterDto.getSenderId())) throw new IllegalArgumentException("فرستنده با شناسه " + letterDto.getSenderId() + " یافت نشد.");
-        if (!recipientService.existById(letterDto.getRecipientId())) throw new IllegalArgumentException("گیرنده با شناسه " + letterDto.getRecipientId() + " یافت نشد.");
+        if (companyService.existById(letterDto.getCompanyId())) throw new IllegalArgumentException("Company with id " + letterDto.getCompanyId() + " not found.");
+        if (!customerService.existById(letterDto.getCustomerId())) throw new IllegalArgumentException("Recipient with id " + letterDto.getCustomerId() + " not found.");
 
         letterRepository.createLetter(
                 letterDto.getCreationDate(),
-                letterDto.getRecipientId(),
-                letterDto.getSenderId(),
+                letterDto.getCustomerId(),
+                letterDto.getCompanyId(),
                 letterDto.getContent(),
                 (letterDto.getLetterNumber() == null) ? letterNumber : letterDto.getLetterNumber(),
                 year.getId(),
                 letterDto.getLetterState().toString()
         );
-        int maxLetterCount = senderService.getLetterCounterById(letterDto.getSenderId());
-        senderService.incrementLetterCountByOne(maxLetterCount + 1 , letterDto.getSenderId());
+        int maxLetterCount = companyService.getLetterCounterById(letterDto.getCompanyId());
+        companyService.incrementLetterCountByOne(maxLetterCount + 1, letterDto.getCompanyId());
     }
+
     @Transactional
     public void updateLetter(Long letterId, LetterDto letterDto) {
-
-        if (!letterRepository.existsById(letterId)) throw new IllegalArgumentException("نامه با شناسه " + letterId + " یافت نشد.");
-        if (senderService.existById(letterDto.getSenderId())) throw new IllegalArgumentException("فرستنده با شناسه " + letterDto.getSenderId() + " یافت نشد.");
-        if (!recipientService.existById(letterDto.getRecipientId())) throw new IllegalArgumentException("گیرنده با شناسه " + letterDto.getRecipientId() + " یافت نشد.");
-        if (!yearRepository.existsById(letterDto.getYearId())) throw new IllegalArgumentException("سال با شناسه " + letterDto.getYearId() + " یافت نشد.");
+        if (!letterRepository.existsById(letterId)) throw new IllegalArgumentException("Letter with id " + letterId + " not found.");
+        if (companyService.existById(letterDto.getCompanyId())) throw new IllegalArgumentException("Company with id " + letterDto.getCompanyId() + " not found.");
+        if (!customerService.existById(letterDto.getCustomerId())) throw new IllegalArgumentException("Recipient with id " + letterDto.getCustomerId() + " not found.");
+        if (!yearRepository.existsById(letterDto.getYearId())) throw new IllegalArgumentException("Year with id " + letterDto.getYearId() + " not found.");
 
         letterRepository.updateLetter(
                 letterId,
                 letterDto.getCreationDate(),
-                letterDto.getRecipientId(),
-                letterDto.getSenderId(),
+                letterDto.getCustomerId(),
+                letterDto.getCompanyId(),
                 letterDto.getContent(),
                 letterDto.getLetterNumber(),
                 letterDto.getYearId(),
@@ -124,9 +127,9 @@ public class LetterService {
                 .orElseThrow(() -> new EntityNotFoundException("نامه با شناسه : " + letterId + " یافت نشد."));
     }
 
-    public String generateLetterNumber(Long senderId,Long yearName) {
-        int count = senderService.getLetterCounterById(senderId) + 1;
-        String letterPrefix = senderService.getLetterPrefixById(senderId);
+    public String generateLetterNumber(Long companyId,Long yearName) {
+        int count = companyService.getLetterCounterById(companyId) + 1;
+        String letterPrefix = companyService.getLetterPrefixById(companyId);
         return letterPrefix + "-" + yearName + "-" + count;
     }
     protected Year getYear(Long yearName) {

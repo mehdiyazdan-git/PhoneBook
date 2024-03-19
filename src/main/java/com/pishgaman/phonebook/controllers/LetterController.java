@@ -3,14 +3,17 @@ package com.pishgaman.phonebook.controllers;
 import com.pishgaman.phonebook.dtos.LetterDetailsDto;
 import com.pishgaman.phonebook.dtos.LetterDto;
 import com.pishgaman.phonebook.enums.LetterState;
+import com.pishgaman.phonebook.searchforms.LetterSearch;
 import com.pishgaman.phonebook.services.LetterService;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 @CrossOrigin
 @RestController
@@ -29,16 +32,31 @@ public class LetterController {
         List<LetterDto> letters = letterService.getAllLetters();
         return ResponseEntity.ok(letters);
     }
-    @GetMapping(path = "/all-by-sender-id/{senderId}")
-    public ResponseEntity<List<LetterDetailsDto>> findLetterDetailsBySenderId(@PathVariable("senderId") Long senderId) {
-        List<LetterDetailsDto> letters = letterService.findLetterDetailsBySenderId(senderId);
+    @GetMapping(path = "/pageable")
+    public ResponseEntity<Page<LetterDetailsDto>> getAllLetterDetails(
+            @RequestParam Optional<Long> companyId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "ASC") String order,
+            LetterSearch search) {
+
+        companyId.ifPresent(search::setCompanyId); // Set senderId in search criteria if present
+
+        Page<LetterDetailsDto> letters = letterService.findAllLetterDetails(search, page, size, sortBy, order);
         return ResponseEntity.ok(letters);
     }
-    @GetMapping("/details")
-    public ResponseEntity<List<LetterDetailsDto>> getLetterDetails() {
-        List<LetterDetailsDto> letterDetails = letterService.getLetterDetails();
-        return ResponseEntity.ok(letterDetails);
-    }
+
+//    @GetMapping(path = "/all-by-sender-id/{senderId}")
+//    public ResponseEntity<List<LetterDetailsDto>> findLetterDetailsBySenderId(@PathVariable("senderId") Long senderId) {
+//        List<LetterDetailsDto> letters = letterService.findLetterDetailsBySenderId(senderId);
+//        return ResponseEntity.ok(letters);
+//    }
+//    @GetMapping("/details")
+//    public ResponseEntity<List<LetterDetailsDto>> getLetterDetails() {
+//        List<LetterDetailsDto> letterDetails = letterService.getLetterDetails();
+//        return ResponseEntity.ok(letterDetails);
+//    }
 
     @GetMapping(path = "/{letterId}")
     public ResponseEntity<LetterDto> getLetterById(@PathVariable Long letterId) {

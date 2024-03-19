@@ -2,28 +2,17 @@ package com.pishgaman.phonebook.services;
 
 import com.pishgaman.phonebook.dtos.AttachListDto;
 import com.pishgaman.phonebook.dtos.AttachmentDto;
-import com.pishgaman.phonebook.dtos.RecipientDto;
 import com.pishgaman.phonebook.entities.Attachment;
-import com.pishgaman.phonebook.entities.Letter;
-import com.pishgaman.phonebook.entities.Recipient;
-import com.pishgaman.phonebook.exceptions.EntityAlreadyExistsException;
-import com.pishgaman.phonebook.exceptions.FileStorageException;
 import com.pishgaman.phonebook.mappers.AttachmentMapper;
-import com.pishgaman.phonebook.projections.AttachmentInfo;
 import com.pishgaman.phonebook.repositories.AttachmentRepository;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
-import java.util.Collection;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 public class AttachmentService {

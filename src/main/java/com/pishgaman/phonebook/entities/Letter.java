@@ -7,7 +7,6 @@ import org.hibernate.proxy.HibernateProxy;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Objects;
 
@@ -25,20 +24,23 @@ public class Letter {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-
     @Column(name = "creation_date")
     private LocalDate creationDate;
+
+    @ManyToOne
+    @JoinColumn(name = "letter_type_id")
+    private LetterType letterType;
 
     @Column(name = "letter_number", unique = true)
     private String letterNumber;
 
     @ManyToOne(cascade = {CascadeType.MERGE,CascadeType.PERSIST})
-    @JoinColumn(name = "recipient_id")
-    private Recipient recipient;
+    @JoinColumn(name = "customer_id")
+    private Customer customer;
 
     @ManyToOne(cascade = {CascadeType.MERGE,CascadeType.PERSIST})
-    @JoinColumn(name = "sender_id")
-    private Sender sender;
+    @JoinColumn(name = "company_id")
+    private Company company;
 
     @ManyToOne
     @JoinColumn(name = "year_id")
@@ -50,6 +52,8 @@ public class Letter {
 
     @OneToMany(mappedBy = "letter", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Attachment> attachments = new ArrayList<>();
+
+
 
     public Letter(Long id) {
         this.id = id;

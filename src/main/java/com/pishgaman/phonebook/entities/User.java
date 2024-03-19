@@ -4,36 +4,18 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
 
-import java.time.LocalDate;
-import java.util.LinkedHashSet;
 import java.util.Objects;
-import java.util.Set;
 
-@AllArgsConstructor
-@NoArgsConstructor
+@Entity
 @Getter
 @Setter
-@Entity
-public class Recipient {
-
+@ToString
+@RequiredArgsConstructor
+@Table(name = "_user")
+public class User {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-    @Column(name = "name")
-    private String name;
-    @Column(name = "address")
-    private String address;
-    @Column(name = "phone_number")
-    private String phoneNumber;
-    @Column(name = "national_identity")
-    private String nationalIdentity;
-    @Column(name = "register_code")
-    private String registerCode;
-    @Column(name = "register_date")
-    private LocalDate registerDate;
-
-    @OneToMany(mappedBy = "recipient", orphanRemoval = true)
-    private Set<Person> persons = new LinkedHashSet<>();
+    private Integer id;
 
     @Override
     public final boolean equals(Object o) {
@@ -42,8 +24,8 @@ public class Recipient {
         Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
         Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
         if (thisEffectiveClass != oEffectiveClass) return false;
-        Recipient recipient = (Recipient) o;
-        return getId() != null && Objects.equals(getId(), recipient.getId());
+        User user = (User) o;
+        return getId() != null && Objects.equals(getId(), user.getId());
     }
 
     @Override
@@ -51,4 +33,3 @@ public class Recipient {
         return this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
     }
 }
-

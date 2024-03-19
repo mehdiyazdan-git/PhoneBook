@@ -1,6 +1,7 @@
 package com.pishgaman.phonebook.controllers;
 
 import com.pishgaman.phonebook.dtos.SenderDto;
+import com.pishgaman.phonebook.dtos.SenderSelectDto;
 import com.pishgaman.phonebook.services.SenderService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -30,6 +31,11 @@ public class SenderController {
     @GetMapping(path = "/search")
     public ResponseEntity<List<SenderDto>> searchSenderByNameContaining(@RequestParam("searchQuery") String searchQuery) {
         List<SenderDto> senders = senderService.searchSenderByNameContaining(searchQuery);
+        return ResponseEntity.ok(senders);
+    }
+    @GetMapping(path = "/select")
+    public ResponseEntity<List<SenderSelectDto>> findAllRecipientSelect() {
+        List<SenderSelectDto> senders = senderService.findAllSenderSelect();
         return ResponseEntity.ok(senders);
     }
 

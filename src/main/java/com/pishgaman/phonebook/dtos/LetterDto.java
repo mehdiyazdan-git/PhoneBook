@@ -7,7 +7,6 @@ import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
 import java.time.LocalDate;
-import java.util.Date;
 
 /**
  * DTO for {@link com.pishgaman.phonebook.entities.Letter}
@@ -20,8 +19,8 @@ public class LetterDto implements Serializable {
     private String content;
     private LocalDate creationDate;
     private String letterNumber;
-    private Long recipientId;
-    private Long senderId;
+    private Long customerId;
+    private Long companyId;
     private Long yearId;
     private LetterState letterState;
 }

@@ -6,29 +6,29 @@ import org.hibernate.proxy.HibernateProxy;
 
 import java.util.Objects;
 
-@Getter
-@Setter
-@ToString
-@RequiredArgsConstructor
-@Entity
-public class Sender {
+    @Getter
+    @Setter
+    @ToString
+    @RequiredArgsConstructor
+    @Entity
+    public class Sender {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Long id;
 
-    private String name;
+        private String name;
 
-    private String address;
+        private String address;
 
-    @Column(name = "phone_number")
-    private String phoneNumber;
+        @Column(name = "phone_number")
+        private String phoneNumber;
 
-    @Column(name = "letter_prefix")
-    private String letterPrefix;
+        @Column(name = "letter_prefix")
+        private String letterPrefix;
 
-    @Column(name = "letter_counter")
-    private int letterCounter;
+        @Column(name = "letter_counter")
+        private int letterCounter;
 
     @Override
     public final boolean equals(Object o) {

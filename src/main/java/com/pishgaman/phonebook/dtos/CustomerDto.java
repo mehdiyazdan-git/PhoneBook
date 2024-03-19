@@ -1,6 +1,6 @@
 package com.pishgaman.phonebook.dtos;
 
-import jakarta.persistence.Column;
+import com.pishgaman.phonebook.entities.Customer;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,12 +9,12 @@ import java.io.Serializable;
 import java.time.LocalDate;
 
 /**
- * DTO for {@link com.pishgaman.phonebook.entities.Recipient}
+ * DTO for {@link Customer}
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class RecipientDto implements Serializable {
+public class CustomerDto implements Serializable {
     private Long id;
     private String name;
     private String address;

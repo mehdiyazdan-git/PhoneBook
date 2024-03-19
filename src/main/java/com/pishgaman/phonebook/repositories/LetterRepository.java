@@ -1,9 +1,14 @@
 package com.pishgaman.phonebook.repositories;
 
-import com.pishgaman.phonebook.dtos.LetterDetailsDto;
 import com.pishgaman.phonebook.entities.Letter;
 import com.pishgaman.phonebook.entities.Sender;
 import com.pishgaman.phonebook.enums.LetterState;
+import com.pishgaman.phonebook.projections.LetterInfo;
+import com.pishgaman.phonebook.projections.LetterProjection;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -23,12 +28,12 @@ public interface LetterRepository extends JpaRepository<Letter, Long> {
     @Transactional
     @Modifying
     @Query(value = "insert into public.letter\t" +
-            "(creation_date, recipient_id, sender_id, content, letter_number, year_id, letter_state)\n\t" +
-            "values (:creationDate, :recipientId, :senderId, :content, :letterNumber, :yearId, :letterState)"
+            "(creation_date, customer_id, company_id, content, letter_number, year_id, letter_state)\n\t" +
+            "values (:creationDate, :customerId, :companyId, :content, :letterNumber, :yearId, :letterState)"
             ,nativeQuery = true)
     void createLetter(@Param("creationDate") LocalDate creationDate,
-                      @Param("recipientId") Long recipientId,
-                      @Param("senderId") Long senderId,
+                      @Param("customerId") Long customerId,
+                      @Param("companyId") Long companyId,
                       @Param("content") String content,
                       @Param("letterNumber") String letterNumber,
                       @Param("yearId") Long yearId,
@@ -38,8 +43,8 @@ public interface LetterRepository extends JpaRepository<Letter, Long> {
             @Modifying
             @Query(value = "update Letter  set " +
                     "creation_date = :creationDate, " +
-                    "recipient_id = :recipientId, " +
-                    "sender_id = :senderId, " +
+                    "customer_id = :customerId, " +
+                    "company_id = :companyId, " +
                     "content = :content, " +
                     "letter_number = :letterNumber, " +
                     "year_id = :yearId, " +
@@ -48,8 +53,8 @@ public interface LetterRepository extends JpaRepository<Letter, Long> {
             public void updateLetter(
                     @Param("letterId") Long letterId,
                     @Param("creationDate") LocalDate creationDate,
-                    @Param("recipientId") Long recipientId,
-                    @Param("senderId") Long senderId,
+                    @Param("customerId") Long customerId,
+                    @Param("companyId") Long companyId,
                     @Param("content") String content,
                     @Param("letterNumber") String letterNumber,
                     @Param("yearId") Long yearId,
@@ -66,33 +71,24 @@ public interface LetterRepository extends JpaRepository<Letter, Long> {
     @Query("update Attachment a set a.deletable = :deletable where a.letter.id = :letterIdRef")
     void updateDeletable(@Param("deletable") boolean deletable, @Param("letterIdRef") Long letterIdRef);
 
-    @Query("SELECT NEW com.pishgaman.phonebook.dtos.LetterDetailsDto(" +
-            "l.id , " +
-            "l.creationDate, " +
-            "l.content, " +
-            "l.letterNumber, " +
-            "l.letterState, " +
-            "r.name, " +
-            "s.name) " +
-            "FROM Letter l " +
-            "LEFT JOIN l.recipient r " +
-            "LEFT JOIN l.sender s")
-    List<LetterDetailsDto> findLetterDetails();
 
-    @Query("SELECT NEW com.pishgaman.phonebook.dtos.LetterDetailsDto(" +
-            "l.id , " +
-            "l.creationDate, " +
-            "l.content, " +
-            "l.letterNumber, " +
-            "l.letterState, " +
-            "r.name, " +
-            "s.name) " +
-            "FROM Letter l " +
-            "LEFT JOIN l.recipient r " +
-            "LEFT JOIN l.sender s " +
-            "WHERE s.id is null or s.id = :senderId\t")
-    List<LetterDetailsDto> findLetterDetailsBySenderId(@Param("senderId") Long senderId);
 
-    @Query("select (count(l) > 0) from Letter l where l.sender = :sender")
+    @Query("select (count(l) > 0) from Letter l where l.company = :sender")
     boolean existsAllBySender(@Param("sender") Sender sender);
+
+
+
+    @Query(value = "SELECT l.id AS letterId, l.creationDate AS creationDate, l.content AS content, " +
+            "l.letterNumber AS letterNumber, l.letterState AS letterState, " +
+            "r.name AS recipientName, s.companyName AS senderName " +
+            "FROM Letter l " +
+            "LEFT JOIN l.customer r " +
+            "LEFT JOIN l.company s",
+            countQuery = "SELECT COUNT(l) FROM Letter l", // For pagination
+            nativeQuery = false)
+    Page<Letter> findAllWithProjection(Specification<Letter> spec, Pageable pageable);
+
+
+    @Query("select l from Letter l")
+    Page<LetterProjection> findAll(@Param("spec") Specification<Letter> spec, Pageable pageable);
 }

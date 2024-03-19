@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 
 /**
  * DTO for {@link com.pishgaman.phonebook.entities.Person}
@@ -16,7 +17,12 @@ public class PersonDto implements Serializable {
     private Long id;
     private String firstName;
     private String lastName;
-    private String mobile;
-    private String email;
-    private Long recipientId;
+    private String fatherName;
+    private String nationalId;
+    private LocalDate birthDate;
+    private String registrationNumber;
+    private String postalCode;
+    private String address;
+    private String phoneNumber;
+
 }

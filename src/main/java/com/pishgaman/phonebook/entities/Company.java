@@ -1,13 +1,12 @@
 package com.pishgaman.phonebook.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.*;
-import org.hibernate.proxy.HibernateProxy;
-
-import java.util.Objects;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+import java.time.LocalDate;
+import java.util.Set;
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -18,22 +17,37 @@ public class Company {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String name;
+    private String taxEconomicCode;
+    private String taxFileNumber;
+    private String taxFileClass;
+    private String taxTrackingID;
+    private String taxPortalUsername;
+    private String taxPortalPassword;
+    private String taxDepartment;
+
+    private String companyName;
+    private String nationalId;
+    private String registrationNumber;
+    private LocalDate registrationDate;
+    private String address;
+    private String postalCode;
+    private String phoneNumber;
+    private String faxNumber;
+
+    private String softwareUsername;
+    private String softwarePassword;
+    private String softwareCallCenter;
+
+    private String insurancePortalUsername;
+    private String insurancePortalPassword;
+    private String insuranceBranch;
+
     private String letterPrefix;
+    private Integer letterCounter;
 
-    @Override
-    public final boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null) return false;
-        Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
-        Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
-        if (thisEffectiveClass != oEffectiveClass) return false;
-        Company company = (Company) o;
-        return getId() != null && Objects.equals(getId(), company.getId());
-    }
+    // Add this inside your Company class.
 
-    @Override
-    public final int hashCode() {
-        return this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass().hashCode() : getClass().hashCode();
-    }
+    @OneToMany(mappedBy = "company",orphanRemoval = true)
+    private Set<BoardMember> boardMembers;
+
 }

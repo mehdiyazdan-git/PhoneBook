@@ -1,6 +1,7 @@
 package com.pishgaman.phonebook.services;
 
 import com.pishgaman.phonebook.dtos.SenderDto;
+import com.pishgaman.phonebook.dtos.SenderSelectDto;
 import com.pishgaman.phonebook.entities.Sender;
 import com.pishgaman.phonebook.exceptions.EntityAlreadyExistsException;
 import com.pishgaman.phonebook.mappers.SenderMapper;
@@ -24,6 +25,9 @@ public class SenderService {
     }
     public List<SenderDto> findAll(){
         return senderRepository.findAll().stream().map(senderMapper::toDto).collect(Collectors.toList());
+    }
+    public List<SenderSelectDto> findAllSenderSelect() {
+        return senderRepository.findAll().stream().map(senderMapper::toSelectDto).collect(Collectors.toList());
     }
     public List<SenderDto> searchSenderByNameContaining(String searchQuery) {
         return senderRepository.findBySenderNameContains(searchQuery).stream().map(senderMapper::toDto).collect(Collectors.toList());
