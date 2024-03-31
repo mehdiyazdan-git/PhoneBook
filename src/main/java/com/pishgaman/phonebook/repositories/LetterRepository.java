@@ -28,8 +28,8 @@ public interface LetterRepository extends JpaRepository<Letter, Long> {
     @Transactional
     @Modifying
     @Query(value = "insert into public.letter\t" +
-            "(creation_date, customer_id, company_id, content, letter_number, year_id, letter_state)\n\t" +
-            "values (:creationDate, :customerId, :companyId, :content, :letterNumber, :yearId, :letterState)"
+            "(creation_date, customer_id, company_id, content, letter_number, year_id, letter_state,letter_type_id)\n\t" +
+            "values (:creationDate, :customerId, :companyId, :content, :letterNumber, :yearId, :letterState,:letterTypeId)"
             ,nativeQuery = true)
     void createLetter(@Param("creationDate") LocalDate creationDate,
                       @Param("customerId") Long customerId,
@@ -37,7 +37,9 @@ public interface LetterRepository extends JpaRepository<Letter, Long> {
                       @Param("content") String content,
                       @Param("letterNumber") String letterNumber,
                       @Param("yearId") Long yearId,
-                      @Param("letterState") String letterState);
+                      @Param("letterState") String letterState,
+                      @Param("letterTypeId") Long letterTypeId
+    );
 
             @Transactional
             @Modifying

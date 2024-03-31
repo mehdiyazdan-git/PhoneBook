@@ -33,7 +33,11 @@ public class AttachmentController {
     private final LetterRepository letterRepository;
 
     @Autowired
-    public AttachmentController(AttachmentService attachmentService, AttachmentMapper attachmentMapper, LetterRepository letterRepository) {
+    public AttachmentController(
+            AttachmentService attachmentService,
+            AttachmentMapper attachmentMapper,
+            LetterRepository letterRepository
+    ) {
         this.attachmentService = attachmentService;
         this.attachmentMapper = attachmentMapper;
         this.letterRepository = letterRepository;
@@ -41,7 +45,7 @@ public class AttachmentController {
 
     @PostMapping("/upload")
     public ResponseEntity<?> uploadToDB(@RequestParam("letterId") Long letterId,
-                                        @RequestParam("file") MultipartFile[] files) {
+                                        @org.jetbrains.annotations.NotNull @RequestParam("file") MultipartFile[] files) {
         // Iterate through each file
         for (MultipartFile file : files) {
             Attachment attachment = new Attachment();

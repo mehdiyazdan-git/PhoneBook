@@ -24,11 +24,20 @@ public class Person {
     private String postalCode;
     private String address;
     private String phoneNumber;
+    private String email;
     @OneToMany(mappedBy = "person",orphanRemoval = true)
     private Set<BoardMember> boardMember;
 
-    @OneToOne(mappedBy = "person", cascade = CascadeType.ALL, orphanRemoval = true)
-    private PersonDocument personDocument;
+    @OneToMany(mappedBy = "person", orphanRemoval = true)
+    private Set<Document> documents = new LinkedHashSet<>();
+
+    public Person(Long id, String firstName, String lastName, String mobile, String email) {
+        this.id = id;
+        this.firstName = firstName;
+        this.lastName = lastName;
+        this.phoneNumber = mobile;
+        this.email = email;
+    }
 
     public Person(Long id) {
         this.id = id;

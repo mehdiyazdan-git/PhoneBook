@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 public class LetterService {
     private final LetterRepository letterRepository;
     private final LetterMapper letterMapper;
-    private final SenderService senderService;
     private final CustomerService customerService;
     private final YearRepository yearRepository;
     private final LetterSearchDao letterSearchDao;
@@ -62,7 +61,7 @@ public class LetterService {
         Year year = this.getYear(letterDto.getYearId());
         String letterNumber = this.generateLetterNumber(letterDto.getCompanyId(), year.getName());
 
-        if (companyService.existById(letterDto.getCompanyId())) throw new IllegalArgumentException("Company with id " + letterDto.getCompanyId() + " not found.");
+        if (!companyService.existById(letterDto.getCompanyId())) throw new IllegalArgumentException("Company with id " + letterDto.getCompanyId() + " not found.");
         if (!customerService.existById(letterDto.getCustomerId())) throw new IllegalArgumentException("Recipient with id " + letterDto.getCustomerId() + " not found.");
 
         letterRepository.createLetter(
@@ -72,7 +71,8 @@ public class LetterService {
                 letterDto.getContent(),
                 (letterDto.getLetterNumber() == null) ? letterNumber : letterDto.getLetterNumber(),
                 year.getId(),
-                letterDto.getLetterState().toString()
+                letterDto.getLetterState().toString(),
+                letterDto.getLetterTypeId()
         );
         int maxLetterCount = companyService.getLetterCounterById(letterDto.getCompanyId());
         companyService.incrementLetterCountByOne(maxLetterCount + 1, letterDto.getCompanyId());
@@ -81,7 +81,7 @@ public class LetterService {
     @Transactional
     public void updateLetter(Long letterId, LetterDto letterDto) {
         if (!letterRepository.existsById(letterId)) throw new IllegalArgumentException("Letter with id " + letterId + " not found.");
-        if (companyService.existById(letterDto.getCompanyId())) throw new IllegalArgumentException("Company with id " + letterDto.getCompanyId() + " not found.");
+        if (!companyService.existById(letterDto.getCompanyId())) throw new IllegalArgumentException("Company with id " + letterDto.getCompanyId() + " not found.");
         if (!customerService.existById(letterDto.getCustomerId())) throw new IllegalArgumentException("Recipient with id " + letterDto.getCustomerId() + " not found.");
         if (!yearRepository.existsById(letterDto.getYearId())) throw new IllegalArgumentException("Year with id " + letterDto.getYearId() + " not found.");
 
@@ -99,7 +99,6 @@ public class LetterService {
 
     @Transactional
     public void updateLetterState(Long letterId, LetterState letterState) {
-
 
         letterRepository.updateLetterState(letterState, letterId);
 

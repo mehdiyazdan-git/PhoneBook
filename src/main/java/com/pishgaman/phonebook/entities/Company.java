@@ -6,6 +6,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import java.time.LocalDate;
+import java.util.LinkedHashSet;
 import java.util.Set;
 
 @AllArgsConstructor
@@ -49,5 +50,8 @@ public class Company {
 
     @OneToMany(mappedBy = "company",orphanRemoval = true)
     private Set<BoardMember> boardMembers;
+
+    @OneToMany(mappedBy = "company", orphanRemoval = true)
+    private Set<Document> documents = new LinkedHashSet<>();
 
 }

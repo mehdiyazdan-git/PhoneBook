@@ -27,7 +27,7 @@ public class LetterTypeInitializer {
             String jsonData = new String(Files.readAllBytes(Paths.get(resource.getURI())));
             ObjectMapper mapper = new ObjectMapper();
             List<LetterType> letterTypes = mapper.readValue(jsonData, new TypeReference<>() {});
-            letterTypeRepository.saveAll(letterTypes);
+//            letterTypeRepository.saveAll(letterTypes);
         }
     }
 }

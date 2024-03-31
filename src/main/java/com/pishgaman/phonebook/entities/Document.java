@@ -1,21 +1,38 @@
 package com.pishgaman.phonebook.entities;
 
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.util.Objects;
 
-@Entity
+@AllArgsConstructor
+@NoArgsConstructor
 @Getter
 @Setter
-@ToString
-@RequiredArgsConstructor
-@Table(name = "_user")
-public class User {
+@Entity
+public class Document {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
+    private String documentName;
+    private String documentType;
+    private String fileExtension;
+    @Lob
+    @Basic(fetch = FetchType.LAZY)
+    private byte[] documentFile;
+
+
+    @ManyToOne
+    @JoinColumn(name = "person_id")
+    private Person person;
+
+    @ManyToOne
+    @JoinColumn(name = "company_id")
+    private Company company;
 
     @Override
     public final boolean equals(Object o) {
@@ -24,8 +41,8 @@ public class User {
         Class<?> oEffectiveClass = o instanceof HibernateProxy ? ((HibernateProxy) o).getHibernateLazyInitializer().getPersistentClass() : o.getClass();
         Class<?> thisEffectiveClass = this instanceof HibernateProxy ? ((HibernateProxy) this).getHibernateLazyInitializer().getPersistentClass() : this.getClass();
         if (thisEffectiveClass != oEffectiveClass) return false;
-        User user = (User) o;
-        return getId() != null && Objects.equals(getId(), user.getId());
+        Document document = (Document) o;
+        return getId() != null && Objects.equals(getId(), document.getId());
     }
 
     @Override

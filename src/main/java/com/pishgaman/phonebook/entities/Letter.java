@@ -34,11 +34,11 @@ public class Letter {
     @Column(name = "letter_number", unique = true)
     private String letterNumber;
 
-    @ManyToOne(cascade = {CascadeType.MERGE,CascadeType.PERSIST})
+    @ManyToOne
     @JoinColumn(name = "customer_id")
     private Customer customer;
 
-    @ManyToOne(cascade = {CascadeType.MERGE,CascadeType.PERSIST})
+    @ManyToOne
     @JoinColumn(name = "company_id")
     private Company company;
 

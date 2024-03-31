@@ -8,20 +8,18 @@ import lombok.NoArgsConstructor;
 import java.io.Serializable;
 
 /**
- * DTO for {@link com.pishgaman.phonebook.entities.PersonDocument}
+ * DTO for {@link com.pishgaman.phonebook.entities.Document}
  */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class PersonDocumentDto implements Serializable {
+public class DocumentDto implements Serializable {
     private Long id;
     private String documentName;
     private String documentType;
-    private byte[] nationalIdFile;
-    private byte[] birthCertificateFile;
-    private byte[] cardServiceFile;
-    private byte[] academicDegreeFile;
     private String fileExtension;
+    private byte[] documentFile;
     private Long personId;
+    private Long companyId;
 }

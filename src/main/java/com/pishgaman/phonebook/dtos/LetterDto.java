@@ -23,4 +23,6 @@ public class LetterDto implements Serializable {
     private Long companyId;
     private Long yearId;
     private LetterState letterState;
+    private Long letterTypeId;
+
 }

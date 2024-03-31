@@ -1,9 +1,8 @@
 package com.pishgaman.phonebook.specifications;
 
 
-import com.pishgaman.phonebook.entities.User;
 import com.pishgaman.phonebook.searchforms.UserSearch;
-
+import com.pishgaman.phonebook.security.user.User;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 

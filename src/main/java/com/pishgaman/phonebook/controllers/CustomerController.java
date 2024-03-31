@@ -12,10 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-@CrossOrigin(
-        origins = "http://localhost:3000",
-        allowCredentials = "true"
-)
+@CrossOrigin
 @RestController
 @RequestMapping(path = "/api/customers")
 public class CustomerController {
