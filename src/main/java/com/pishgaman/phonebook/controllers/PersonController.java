@@ -6,10 +6,10 @@ import com.pishgaman.phonebook.searchforms.PersonSearch;
 import com.pishgaman.phonebook.services.PersonService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 @CrossOrigin
@@ -22,6 +22,17 @@ public class PersonController {
     @Autowired
     public PersonController(PersonService personService) {
         this.personService = personService;
+    }
+
+    @GetMapping("/download-all-persons.xlsx")
+    public ResponseEntity<byte[]> downloadAllPersonsExcel() throws IOException {
+        byte[] excelData = personService.generateAllPersonsExcel1();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDisposition(ContentDisposition.attachment()
+                .filename("all_persons.xlsx")
+                .build());
+        return ResponseEntity.ok().headers(headers).body(excelData);
     }
 
     @GetMapping(path = {"/", ""})

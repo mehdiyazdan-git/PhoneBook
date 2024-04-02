@@ -64,9 +64,20 @@
             <optional>true</optional>
         </dependency>
         <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.2</version>
+        </dependency>
+
+        <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.github.eloyzone</groupId>
+            <artifactId>jalali-calendar</artifactId>
+            <version>1.0.0</version>
         </dependency>
         <dependency>
             <groupId>org.mapstruct</groupId>

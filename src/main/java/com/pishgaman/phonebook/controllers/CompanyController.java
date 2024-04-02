@@ -7,13 +7,13 @@ import com.pishgaman.phonebook.searchforms.CompanySearch;
 import com.pishgaman.phonebook.services.CompanyService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
-@CrossOrigin(origins = "http://localhost:3000", allowCredentials = "true")
+@CrossOrigin
 @RestController
 @RequestMapping(path = "/api/companies")
 public class CompanyController {
@@ -23,6 +23,17 @@ public class CompanyController {
     @Autowired
     public CompanyController(CompanyService companyService) {
         this.companyService = companyService;
+    }
+
+    @GetMapping("/download-all-companies.xlsx")
+    public ResponseEntity<byte[]> generateAllCompaniesExcel() throws IOException {
+        byte[] excelData = companyService.generateAllCompaniesExcel();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDisposition(ContentDisposition.attachment()
+                .filename("all_companies.xlsx")
+                .build());
+        return ResponseEntity.ok().headers(headers).body(excelData);
     }
 
     @GetMapping(path = {"/", ""})

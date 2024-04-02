@@ -5,11 +5,12 @@ import com.pishgaman.phonebook.dtos.CustomerSelect;
 import com.pishgaman.phonebook.searchforms.CustomerSearch;
 import com.pishgaman.phonebook.services.CustomerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
 import java.util.List;
 
 @CrossOrigin
@@ -23,6 +24,19 @@ public class CustomerController {
     public CustomerController(CustomerService customerService) {
         this.customerService = customerService;
     }
+
+    @GetMapping("/download-all-customers.xlsx")
+    public ResponseEntity<byte[]> downloadAllCustomersExcel() throws IOException {
+        byte[] excelData = customerService.generateAllCustomersExcel();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDisposition(ContentDisposition.attachment()
+                .filename("all_customers.xlsx")
+                .build());
+        return ResponseEntity.ok().headers(headers).body(excelData);
+    }
+
+
 
     @GetMapping(path = {"/",""})
     public ResponseEntity<Page<CustomerDto>> getAllCustomers(

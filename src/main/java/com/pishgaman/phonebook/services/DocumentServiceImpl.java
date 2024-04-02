@@ -32,10 +32,12 @@ public class DocumentServiceImpl implements DocumentService {
         }
 
         Document document = new Document();
-        if (documentDto.getPersonId() != null && documentDto.getPersonId() > 0)
-        document.setPerson( personRepository.findById( documentDto.getPersonId()).orElse(null));
-        if (documentDto.getCompanyId() != null && documentDto.getCompanyId() > 0)
-        document.setCompany( companyRepository.findById( documentDto.getCompanyId()).orElse(null));
+        if (documentDto.getPersonId() != null && documentDto.getPersonId() > 0) {
+            document.setPerson( personRepository.findById( documentDto.getPersonId()).orElse(null));
+        }
+        if (documentDto.getCompanyId() != null && documentDto.getCompanyId() > 0) {
+            document.setCompany( companyRepository.findById( documentDto.getCompanyId()).orElse(null));
+        }
         document.setId( documentDto.getId() );
         document.setDocumentName( documentDto.getDocumentName());
         document.setDocumentType( documentDto.getDocumentType());

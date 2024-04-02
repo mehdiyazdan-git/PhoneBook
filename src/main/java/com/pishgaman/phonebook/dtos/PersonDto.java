@@ -24,5 +24,4 @@ public class PersonDto implements Serializable {
     private String postalCode;
     private String address;
     private String phoneNumber;
-
 }
