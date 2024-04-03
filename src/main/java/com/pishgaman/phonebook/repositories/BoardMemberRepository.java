@@ -20,4 +20,13 @@ public interface BoardMemberRepository extends JpaRepository<BoardMember, Long> 
             select b from BoardMember b
             where b.person.id = :personId and b.company.id = :companyId and b.position.id = :positionId""")
     BoardMember findByPersonIdAndCompanyIdAndPositionId(@Param("personId") Long personId, @Param("companyId") Long companyId, @Param("positionId") Long positionId);
+
+
+    @Query("select b from BoardMember b where b.company.id = :company_id and b.position.id = :position_id and b.id <> :boardMemberId")
+    BoardMember findByCompanyIdAndPositionIdAndNotBoardMemberId(@Param("company_id") Long companyId, @Param("position_id") Long positionId, @Param("boardMemberId") Long boardMemberId);
+
+    @Query("""
+            select b from BoardMember b
+            where b.person.id = :personId and b.company.id = :companyId and b.position.id = :positionId and b.id <> :boardMemberId""")
+    BoardMember findByPersonIdAndCompanyIdAndPositionIdAndNotBoardMemberId(@Param("personId") Long personId, @Param("companyId") Long companyId, @Param("positionId") Long positionId, @Param("boardMemberId") Long boardMemberId);
 }

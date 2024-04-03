@@ -16,8 +16,8 @@ public class AuthenticationResponse {
   private String accessToken;
   @JsonProperty("refresh_token")
   private String refreshToken;
-  @JsonProperty("email")
-  private String email;
+  @JsonProperty("userName")
+  private String userName;
   @JsonProperty("role")
   private String role;
 
@@ -26,7 +26,7 @@ public class AuthenticationResponse {
     return " {" +
             "accessToken='" + accessToken + '\n' +
             ", refreshToken='" + refreshToken + '\n' +
-            ", email='" + email + '\n' +
+            ", userName='" + userName + '\n' +
             ", role='" + role + '\n' +
             '}';
   }

@@ -12,9 +12,7 @@ import com.pishgaman.phonebook.repositories.CompanyRepository;
 import com.pishgaman.phonebook.searchforms.CompanySearch;
 import com.pishgaman.phonebook.specifications.CompanySpecification;
 import jakarta.persistence.EntityNotFoundException;
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.FillPatternType;
-import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -22,10 +20,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -85,7 +85,6 @@ public class CompanyService {
             XSSFCellStyle dataStyle = createCellStyle(workbook);
 
 
-
             for (CompanyDto company : allCompanies) {
                 XSSFRow dataRow = sheet.createRow(rowIndex++);
                 dataRow.createCell(0).setCellValue(company.getId());
@@ -121,6 +120,7 @@ public class CompanyService {
             throw new IOException("Error generating Excel file: " + e.getMessage());
         }
     }
+
     private XSSFCellStyle createCellStyle(XSSFWorkbook workbook) {
         XSSFCellStyle style = workbook.createCellStyle();
         style.setBorderTop(BorderStyle.THIN);
@@ -140,6 +140,7 @@ public class CompanyService {
 
         return style;
     }
+
     private XSSFCellStyle createBorderStyle(XSSFWorkbook workbook) {
         XSSFCellStyle style = workbook.createCellStyle();
         style.setBorderTop(BorderStyle.THIN);
@@ -154,6 +155,7 @@ public class CompanyService {
 
         return style;
     }
+
     protected String convertDateToJalali(LocalDate localDate) {
         if (localDate == null) {
             return null;
@@ -171,6 +173,67 @@ public class CompanyService {
     }
 
 
+    public List<CompanyDto> readCompaniesFromExcel(MultipartFile file) throws IOException {
+        List<CompanyDto> companyDtoList = new ArrayList<>();
+        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+            for (Row row : sheet) {
+                if (row.getRowNum() == 0) {
+                    // Skip header row
+                    continue;
+                }
+                CompanyDto company = new CompanyDto();
+                company.setId(Long.parseLong(row.getCell(0).getStringCellValue()));
+                company.setTaxEconomicCode(row.getCell(1).getStringCellValue());
+                company.setTaxFileNumber(row.getCell(2).getStringCellValue());
+                company.setTaxFileClass(row.getCell(3).getStringCellValue());
+                company.setTaxTrackingID(row.getCell(4).getStringCellValue());
+                company.setTaxPortalUsername(row.getCell(5).getStringCellValue());
+                company.setTaxPortalPassword(row.getCell(6).getStringCellValue());
+                company.setTaxDepartment(row.getCell(7).getStringCellValue());
+                company.setCompanyName(row.getCell(8).getStringCellValue());
+                company.setNationalId(row.getCell(9).getStringCellValue());
+                company.setRegistrationNumber(row.getCell(10).getStringCellValue());
+                company.setRegistrationDate(convertJalaliToGregorian(row.getCell(11).getStringCellValue()));
+                company.setAddress(row.getCell(12).getStringCellValue());
+                company.setPostalCode(row.getCell(13).getStringCellValue());
+                company.setPhoneNumber(row.getCell(14).getStringCellValue());
+                company.setFaxNumber(row.getCell(15).getStringCellValue());
+                company.setSoftwareUsername(row.getCell(16).getStringCellValue());
+                company.setSoftwarePassword(row.getCell(17).getStringCellValue());
+                companyDtoList.add(company);
+            }
+        }
+        return companyDtoList;
+
+    }
+
+    public void saveCompanies(List<CompanyDto> companyDtoList) {
+        List<Company> companyList = new ArrayList<>();
+        for (CompanyDto companyDto : companyDtoList) {
+            Company company = companyMapper.toEntity(companyDto);
+            companyList.add(company);
+        }
+        companyRepository.saveAll(companyList);
+    }
+
+    public LocalDate convertJalaliToGregorian(String jalaliDate) {
+        DateConverter dateConverter = new DateConverter();
+
+        String[] parts = jalaliDate.split("/");
+        int jalaliYear = Integer.parseInt(parts[0]);
+        int jalaliMonth = Integer.parseInt(parts[1]);
+        int jalaliDay = Integer.parseInt(parts[2]);
+        JalaliDate jalaliDate1 = dateConverter.gregorianToJalali(jalaliYear, jalaliMonth, jalaliDay);
+
+        if (jalaliDate1 != null) {
+            return LocalDate.of(jalaliDate1.getYear(), jalaliDate1.getMonthPersian().getValue(), jalaliDate1.getDay());
+        }
+        return null;
+    }
+
+    ;
+
     public Page<CompanyDto> findAll(CompanySearch search, int page, int size, String sortBy, String order) {
         Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
         PageRequest pageRequest = PageRequest.of(page, size, sort);
@@ -178,6 +241,7 @@ public class CompanyService {
         return companyRepository.findAll(specification, pageRequest)
                 .map(companyMapper::toDto);
     }
+
     public List<CompanySelect> findAllCompanySelect(String searchParam) {
         Specification<Company> specification = CompanySpecification.getSelectSpecification(searchParam);
         return companyRepository.findAll(specification).stream().map(companyMapper::toSelectDto).collect(Collectors.toList());
@@ -186,6 +250,7 @@ public class CompanyService {
     public List<CompanySelect> searchCompanyByNameContaining(String searchQuery) {
         return companyRepository.findByCompanyNameContains(searchQuery).stream().map(companyMapper::toSelectDto).collect(Collectors.toList());
     }
+
     public int getLetterCounterById(Long companyId) {
         return companyRepository.getMaxLetterCountByCompanyId(companyId);
     }
@@ -228,9 +293,11 @@ public class CompanyService {
         Company updated = companyRepository.save(companyToBeUpdate);
         return companyMapper.toDto(updated);
     }
-    public void incrementLetterCountByOne(Integer count,Long senderId) {
-        companyRepository.incrementLetterCountByOne(count,senderId);
+
+    public void incrementLetterCountByOne(Integer count, Long senderId) {
+        companyRepository.incrementLetterCountByOne(count, senderId);
     }
+
     public String getLetterPrefixById(Long companyId) {
         Company company = findCompanyById(companyId);
         return company.getLetterPrefix();

@@ -18,22 +18,23 @@ import java.util.Optional;
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
-      private final UserRepository repository;
-      private final TokenRepository tokenRepository;
-      private final PasswordEncoder passwordEncoder;
-      private final JwtService jwtService;
-      private final AuthenticationManager authenticationManager;
+    private final UserRepository userRepository;
+    private final TokenRepository tokenRepository;
+    private final PasswordEncoder passwordEncoder;
+    private final JwtService jwtService;
+    private final AuthenticationManager authenticationManager;
 
-      public AuthenticationResponse register(RegisterRequest request) {
+    public AuthenticationResponse register(RegisterRequest request) {
         var user = User.builder()
                 .firstname(request.getFirstname())
                 .lastname(request.getLastname())
+                .username(request.getUsername())
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(request.getRole())
                 .build();
 
-        var savedUser = repository.save(user);
+        var savedUser = userRepository.save(user);
 
         var jwtToken = jwtService.generateToken(user);
         var refreshToken = jwtService.generateRefreshToken(user);
@@ -44,54 +45,54 @@ public class AuthenticationService {
                 .accessToken(jwtToken)
                 .refreshToken(refreshToken)
                 .build();
-      }
+    }
 
-      public AuthenticationResponse authenticate(AuthenticationRequest request) {
+    public AuthenticationResponse authenticate(AuthenticationRequest request) {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
+                        request.getUsername(),
                         request.getPassword()
                 )
         );
-        var user = repository.findByEmail(request.getEmail())
+        var user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow();
-          var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
+        var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
 
-          if (validUserTokens.isEmpty()){
-              var jwtToken = jwtService.generateToken(user);
+        if (validUserTokens.isEmpty()) {
+            var jwtToken = jwtService.generateToken(user);
 
-              revokeAllUserTokens(user);
-              saveUserToken(user, jwtToken);
+            revokeAllUserTokens(user);
+            saveUserToken(user, jwtToken);
 
-              return AuthenticationResponse.builder()
-                      .accessToken(jwtToken)
-                      .refreshToken(jwtService.generateRefreshToken(user))
-                      .email(user.getEmail())
-                      .role(user.getRole().name())
-                      .build();
-          }
-          return  AuthenticationResponse.builder()
-                  .accessToken(validUserTokens.get(0).getToken())
-                  .refreshToken(jwtService.generateRefreshToken(user))
-                  .role(user.getRole().name())
-                  .email(user.getEmail())
-                  .build();
-      }
+            return AuthenticationResponse.builder()
+                    .accessToken(jwtToken)
+                    .refreshToken(jwtService.generateRefreshToken(user))
+                    .userName(user.getUsername())
+                    .role(user.getRole().name())
+                    .build();
+        }
+        return AuthenticationResponse.builder()
+                .accessToken(validUserTokens.get(0).getToken())
+                .refreshToken(jwtService.generateRefreshToken(user))
+                .userName(user.getUsername())
+                .role(user.getRole().name())
+                .build();
+    }
 
     public AuthenticationResponse refreshToken(String refreshToken) {
         if (refreshToken == null || refreshToken.isEmpty()) {
             throw new IllegalArgumentException("Refresh token does not exist or is empty");
         }
         try {
-            String userEmail = jwtService.extractUsername(refreshToken);
+            String username = jwtService.extractUsername(refreshToken);
 
-            if (userEmail == null) {
+            if (username == null) {
                 throw new IllegalArgumentException("Invalid refresh token format");
             }
-            Optional<User> userOptional = this.repository.findByEmail(userEmail);
+            Optional<User> userOptional = userRepository.findByUsername(username);
 
             if (userOptional.isEmpty()) {
-                throw new IllegalArgumentException("User not found for the provided email: " + userEmail);
+                throw new IllegalArgumentException("User not found for the provided username: " + username);
             }
             User user = userOptional.get();
 
@@ -100,7 +101,7 @@ public class AuthenticationService {
             }
             var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
 
-            if (validUserTokens.isEmpty()){
+            if (validUserTokens.isEmpty()) {
                 String accessToken = jwtService.generateToken(user);
                 revokeAllUserTokens(user);
                 saveUserToken(user, accessToken);
@@ -108,15 +109,15 @@ public class AuthenticationService {
                 return AuthenticationResponse.builder()
                         .accessToken(accessToken)
                         .refreshToken(refreshToken)
-                        .email(user.getEmail())
+                        .userName(user.getUsername())
                         .role(user.getRole().name())
                         .build();
             }
-            return  AuthenticationResponse.builder()
+            return AuthenticationResponse.builder()
                     .accessToken(validUserTokens.get(0).getToken())
                     .refreshToken(jwtService.generateRefreshToken(user))
                     .role(user.getRole().name())
-                    .email(user.getEmail())
+                    .userName(user.getUsername())
                     .build();
         } catch (Exception e) {
 
@@ -124,6 +125,14 @@ public class AuthenticationService {
             return new AuthenticationResponse();
         }
     }
+
+    public void signOut(String accessToken) {
+        tokenRepository.findByToken(accessToken).ifPresent(token -> {
+            token.setRevoked(true);
+            tokenRepository.save(token);
+        });
+    }
+
     private void saveUserToken(User user, String jwtToken) {
         var token = Token.builder()
                 .user(user)
@@ -145,8 +154,8 @@ public class AuthenticationService {
         });
         tokenRepository.saveAll(validUserTokens);
     }
-    public boolean isTableEmpty(){
-          return repository.isTableEmpty();
+
+    public boolean isTableEmpty() {
+        return userRepository.isTableEmpty();
     }
 }
-

@@ -4,7 +4,6 @@ import com.pishgaman.phonebook.entities.Person;
 import com.pishgaman.phonebook.entities.Product;
 import com.pishgaman.phonebook.repositories.PersonRepository;
 import com.pishgaman.phonebook.repositories.ProductRepository;
-import com.pishgaman.phonebook.security.auth.AuthenticationRequest;
 import com.pishgaman.phonebook.security.auth.AuthenticationService;
 import com.pishgaman.phonebook.security.auth.RegisterRequest;
 import org.springframework.boot.CommandLineRunner;
@@ -28,16 +27,18 @@ public class PhoneBookApplication {
         return args -> {
 
             var admin = RegisterRequest.builder()
-                    .firstname("Admin")
-                    .lastname("Admin")
-                    .email("admin@mail.com")
+                    .firstname("مهدی")
+                    .lastname("یزدان پرست")
+                    .username("یزدان")
+                    .email("yazdan@mail.com")
                     .password("password")
                     .role(ADMIN)
                     .build();
 
             var manager = RegisterRequest.builder()
-                    .firstname("Admin")
-                    .lastname("Admin")
+                    .firstname("ali")
+                    .lastname("kasra")
+                    .username("Manager")
                     .email("manager@mail.com")
                     .password("password")
                     .role(MANAGER)
@@ -47,8 +48,7 @@ public class PhoneBookApplication {
                 System.out.println("Admin token: " + service.register(admin).getAccessToken());
                 System.out.println("Manager token: " + service.register(manager).getAccessToken());
             }
-            service.authenticate(new AuthenticationRequest("manager@mail.com","password"));
-            // Check if the Person repository is empty
+
             if (personRepository.count() == 0) {
                 // Insert mock data for Persons
                 personRepository.saveAll(Arrays.asList(

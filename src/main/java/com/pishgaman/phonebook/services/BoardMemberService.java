@@ -39,7 +39,7 @@ public class BoardMemberService {
 
     public List<BoardMemberDetailsDto> findAllByCompanyId(Long companyId) {
         Optional<Company> companyOptional = companyRepository.findById(companyId);
-        Company company = companyOptional.orElseThrow(() -> new IllegalArgumentException("Company with id " + companyId + " not found"));
+        Company company = companyOptional.orElseThrow(() -> new IllegalArgumentException("شرکت با شناسه " + companyId + " یافت نشد"));
 
         List<BoardMember> boardMembers = boardMemberRepository.findAllByCompanyId(companyId);
         return boardMembers.stream()
@@ -49,31 +49,31 @@ public class BoardMemberService {
 
     @Transactional
     public BoardMemberDto createBoardMember(BoardMemberDto boardMemberDto) {
-        // Check if the position is unique for the company
-        if (isPositionUniqueForCompany(boardMemberDto.getCompanyId(), boardMemberDto.getPositionId())) {
-            throw new IllegalArgumentException("Position must be unique for each company");
-        }
 
         // Check if the position is unique for the person in the company
         if (isPositionUniqueForPersonInCompany(boardMemberDto.getPersonId(), boardMemberDto.getCompanyId(), boardMemberDto.getPositionId())) {
-            throw new IllegalArgumentException("Position for this person in this company is already taken");
+            throw new IllegalArgumentException("این پست برای این شخص در این شرکت از قبل اختصاص داده شده است");
+        }
+        // Check if the position is unique for the company
+        if (isPositionUniqueForCompany(boardMemberDto.getCompanyId(), boardMemberDto.getPositionId())) {
+            throw new IllegalArgumentException("پست باید در هر شرکت منحصر به فرد باشد");
         }
 
         BoardMember boardMember = new BoardMember();
 
         // Set the Person
         Person person = personRepository.findById(boardMemberDto.getPersonId())
-                .orElseThrow(() -> new IllegalArgumentException("Person with id " + boardMemberDto.getPersonId() + " not found"));
+                .orElseThrow(() -> new IllegalArgumentException("شخص با شناسه " + boardMemberDto.getPersonId() + " یافت نشد"));
         boardMember.setPerson(person);
 
         // Set the Position
         Position position = positionRepository.findById(boardMemberDto.getPositionId())
-                .orElseThrow(() -> new IllegalArgumentException("Position with id " + boardMemberDto.getPositionId() + " not found"));
+                .orElseThrow(() -> new IllegalArgumentException("پست با شناسه " + boardMemberDto.getPositionId() + " یافت نشد"));
         boardMember.setPosition(position);
 
         // Set the Company
         Company company = companyRepository.findById(boardMemberDto.getCompanyId())
-                .orElseThrow(() -> new IllegalArgumentException("Company with id " + boardMemberDto.getCompanyId() + " not found"));
+                .orElseThrow(() -> new IllegalArgumentException("شرکت با شناسه " + boardMemberDto.getCompanyId() + " یافت نشد"));
         boardMember.setCompany(company);
 
         // Save the new BoardMember
@@ -81,39 +81,40 @@ public class BoardMemberService {
         return boardMemberMapper.toDto(boardMember);
     }
 
+
     @Transactional
     public BoardMemberDto updateBoardMember(Long id, BoardMemberDto boardMemberDto) {
         BoardMember boardMember = boardMemberRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("BoardMember with id " + id + " not found"));
+                .orElseThrow(() -> new IllegalArgumentException("عضو هیئت مدیره با شناسه " + id + " یافت نشد"));
 
-        // Check if the position is unique for the company
-        if (isPositionUniqueForCompany(boardMemberDto.getCompanyId(), boardMemberDto.getPositionId())) {
-            throw new IllegalArgumentException("Position must be unique for each company");
+        // Check if the position is unique for the person in the company, excluding the current board member
+        if (boardMemberRepository.findByPersonIdAndCompanyIdAndPositionIdAndNotBoardMemberId(boardMemberDto.getPersonId(), boardMemberDto.getCompanyId(), boardMemberDto.getPositionId(), id) != null) {
+            throw new IllegalArgumentException("این پست برای این شخص در این شرکت از قبل اختصاص داده شده است");
         }
 
-        // Check if the position is unique for the person in the company
-        if (isPositionUniqueForPersonInCompany(boardMemberDto.getPersonId(), boardMemberDto.getCompanyId(), boardMemberDto.getPositionId())) {
-            throw new IllegalArgumentException("Position for this person in this company is already taken");
+        // Check if the position is unique for the company, excluding the current board member
+        if (boardMemberRepository.findByCompanyIdAndPositionIdAndNotBoardMemberId(boardMemberDto.getCompanyId(), boardMemberDto.getPositionId(), id) != null) {
+            throw new IllegalArgumentException("پست باید در هر شرکت منحصر به فرد باشد");
         }
 
         // Update the Person reference
         if (boardMemberDto.getPersonId() != null) {
             Person person = personRepository.findById(boardMemberDto.getPersonId())
-                    .orElseThrow(() -> new IllegalArgumentException("Person with id " + boardMemberDto.getPersonId() + " not found"));
+                    .orElseThrow(() -> new IllegalArgumentException("شخص با شناسه " + boardMemberDto.getPersonId() + " یافت نشد"));
             boardMember.setPerson(person);
         }
 
         // Update the Position reference
         if (boardMemberDto.getPositionId() != null) {
             Position position = positionRepository.findById(boardMemberDto.getPositionId())
-                    .orElseThrow(() -> new IllegalArgumentException("Position with id " + boardMemberDto.getPositionId() + " not found"));
+                    .orElseThrow(() -> new IllegalArgumentException("پست با شناسه " + boardMemberDto.getPositionId() + " یافت نشد"));
             boardMember.setPosition(position);
         }
 
         // Update the Company reference
         if (boardMemberDto.getCompanyId() != null) {
             Company company = companyRepository.findById(boardMemberDto.getCompanyId())
-                    .orElseThrow(() -> new IllegalArgumentException("Company with id " + boardMemberDto.getCompanyId() + " not found"));
+                    .orElseThrow(() -> new IllegalArgumentException("شرکت با شناسه " + boardMemberDto.getCompanyId() + " یافت نشد"));
             boardMember.setCompany(company);
         }
 
@@ -121,6 +122,7 @@ public class BoardMemberService {
         boardMember = boardMemberRepository.save(boardMember);
         return boardMemberMapper.toDto(boardMember);
     }
+
 
     private boolean isPositionUniqueForCompany(Long companyId, Long positionId) {
         // Check if there is already a board member with the same position for the same company
@@ -137,8 +139,10 @@ public class BoardMemberService {
     }
 
     public BoardMemberDto getBoardMemberById(Long id) {
-        BoardMember boardMember = boardMemberRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Company with id " + id + " not found"));
+        BoardMember boardMember = boardMemberRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("شرکت با شناسه " + id + " یافت نشد"));
         return boardMemberMapper.toDto(boardMember);
     }
+
 }
 

@@ -3,7 +3,6 @@ package com.pishgaman.phonebook.controllers;
 
 import com.pishgaman.phonebook.dtos.UserDetailDto;
 import com.pishgaman.phonebook.searchforms.UserSearch;
-import com.pishgaman.phonebook.security.user.UserDto;
 import com.pishgaman.phonebook.services.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -40,7 +39,7 @@ public class UserController {
 
     @PostMapping(path = {"/", ""})
     public ResponseEntity<UserDetailDto> createUser(@RequestBody UserDetailDto userDto) {
-        return ResponseEntity.ok(userService.createUser(userDto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(userDto));
     }
 
     @PutMapping("/{id}")
