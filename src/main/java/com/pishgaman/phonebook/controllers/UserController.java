@@ -13,10 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
-@CrossOrigin(
-        origins = "http://localhost:3000",
-        allowCredentials = "true"
-)
+@CrossOrigin
 @RestController
 @RequestMapping("/api/users")
 @RequiredArgsConstructor
@@ -42,7 +39,7 @@ public class UserController {
     }
 
     @PostMapping(path = {"/", ""})
-    public ResponseEntity<UserDetailDto> createUser(@RequestBody UserDto userDto) {
+    public ResponseEntity<UserDetailDto> createUser(@RequestBody UserDetailDto userDto) {
         return ResponseEntity.ok(userService.createUser(userDto));
     }
 

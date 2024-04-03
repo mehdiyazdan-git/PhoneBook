@@ -26,7 +26,7 @@ public class PersonController {
 
     @GetMapping("/download-all-persons.xlsx")
     public ResponseEntity<byte[]> downloadAllPersonsExcel() throws IOException {
-        byte[] excelData = personService.generateAllPersonsExcel1();
+        byte[] excelData = personService.generateAllPersonsExcel();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         headers.setContentDisposition(ContentDisposition.attachment()

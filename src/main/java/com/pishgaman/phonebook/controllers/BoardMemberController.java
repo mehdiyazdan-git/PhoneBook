@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
@@ -27,17 +28,31 @@ public class BoardMemberController {
         List<BoardMemberDetailsDto> boardMembers = boardMemberService.getAllBoardMembers();
         return ResponseEntity.ok(boardMembers);
     }
+    @GetMapping(path = "/all-by-companyId/{companyId}")
+    public ResponseEntity<List<BoardMemberDetailsDto>> findAllByCompanyId(@PathVariable( name = "companyId") Long companyId) {
 
-    @PostMapping(path = {"/",""})
+        List<BoardMemberDetailsDto> boardMembers = boardMemberService.findAllByCompanyId(companyId);
+        return ResponseEntity.ok(boardMembers);
+    }
+
+    @PostMapping(path = {"", "/"})
     public ResponseEntity<BoardMemberDto> createBoardMember(@RequestBody BoardMemberDto boardMemberDto) {
-        BoardMemberDto createdBoardMember = boardMemberService.createBoardMember(boardMemberDto);
-        return new ResponseEntity<>(createdBoardMember, HttpStatus.CREATED);
+        try {
+            BoardMemberDto createdBoardMember = boardMemberService.createBoardMember(boardMemberDto);
+            return new ResponseEntity<>(createdBoardMember, HttpStatus.CREATED);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<BoardMemberDto> updateBoardMember(@PathVariable Long id, @RequestBody BoardMemberDto boardMemberDto) {
-        BoardMemberDto updatedBoardMember = boardMemberService.updateBoardMember(id, boardMemberDto);
-        return ResponseEntity.ok(updatedBoardMember);
+        try {
+            BoardMemberDto updatedBoardMember = boardMemberService.updateBoardMember(id, boardMemberDto);
+            return ResponseEntity.ok(updatedBoardMember);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+        }
     }
 
     @DeleteMapping("/{id}")

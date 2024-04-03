@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,8 +37,28 @@ public class BoardMemberService {
                 .collect(Collectors.toList());
     }
 
+    public List<BoardMemberDetailsDto> findAllByCompanyId(Long companyId) {
+        Optional<Company> companyOptional = companyRepository.findById(companyId);
+        Company company = companyOptional.orElseThrow(() -> new IllegalArgumentException("Company with id " + companyId + " not found"));
+
+        List<BoardMember> boardMembers = boardMemberRepository.findAllByCompanyId(companyId);
+        return boardMembers.stream()
+                .map(boardMemberDetailsMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public BoardMemberDto createBoardMember(BoardMemberDto boardMemberDto) {
+        // Check if the position is unique for the company
+        if (isPositionUniqueForCompany(boardMemberDto.getCompanyId(), boardMemberDto.getPositionId())) {
+            throw new IllegalArgumentException("Position must be unique for each company");
+        }
+
+        // Check if the position is unique for the person in the company
+        if (isPositionUniqueForPersonInCompany(boardMemberDto.getPersonId(), boardMemberDto.getCompanyId(), boardMemberDto.getPositionId())) {
+            throw new IllegalArgumentException("Position for this person in this company is already taken");
+        }
+
         BoardMember boardMember = new BoardMember();
 
         // Set the Person
@@ -65,6 +86,16 @@ public class BoardMemberService {
         BoardMember boardMember = boardMemberRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("BoardMember with id " + id + " not found"));
 
+        // Check if the position is unique for the company
+        if (isPositionUniqueForCompany(boardMemberDto.getCompanyId(), boardMemberDto.getPositionId())) {
+            throw new IllegalArgumentException("Position must be unique for each company");
+        }
+
+        // Check if the position is unique for the person in the company
+        if (isPositionUniqueForPersonInCompany(boardMemberDto.getPersonId(), boardMemberDto.getCompanyId(), boardMemberDto.getPositionId())) {
+            throw new IllegalArgumentException("Position for this person in this company is already taken");
+        }
+
         // Update the Person reference
         if (boardMemberDto.getPersonId() != null) {
             Person person = personRepository.findById(boardMemberDto.getPersonId())
@@ -91,6 +122,16 @@ public class BoardMemberService {
         return boardMemberMapper.toDto(boardMember);
     }
 
+    private boolean isPositionUniqueForCompany(Long companyId, Long positionId) {
+        // Check if there is already a board member with the same position for the same company
+        return boardMemberRepository.findByCompanyIdAndPositionId(companyId, positionId) != null;
+    }
+
+    private boolean isPositionUniqueForPersonInCompany(Long personId, Long companyId, Long positionId) {
+        // Check if there is already a board member with the same person and position in the company
+        return boardMemberRepository.findByPersonIdAndCompanyIdAndPositionId(personId, companyId, positionId) != null;
+    }
+
     public void deleteBoardMember(Long id) {
         boardMemberRepository.deleteById(id);
     }
@@ -99,5 +140,5 @@ public class BoardMemberService {
         BoardMember boardMember = boardMemberRepository.findById(id).orElseThrow(() -> new IllegalArgumentException("Company with id " + id + " not found"));
         return boardMemberMapper.toDto(boardMember);
     }
-
 }
+

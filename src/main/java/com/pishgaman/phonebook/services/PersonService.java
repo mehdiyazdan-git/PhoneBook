@@ -12,10 +12,10 @@ import com.pishgaman.phonebook.searchforms.PersonSearch;
 import com.pishgaman.phonebook.specifications.PersonSpecification;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.antlr.v4.runtime.misc.Interval;
-import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.streaming.SXSSFSheet;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.ss.usermodel.BorderStyle;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.ss.usermodel.HorizontalAlignment;
+import org.apache.poi.ss.usermodel.IndexedColors;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -26,9 +26,7 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -91,7 +89,6 @@ public class PersonService {
 
             XSSFCellStyle dataStyle = createCellStyle(workbook);
 
-            // Populate data rows
             for (PersonDto person : allPersons) {
                 XSSFRow dataRow = sheet.createRow(rowIndex++);
                 dataRow.createCell(0).setCellValue(person.getId());
@@ -107,22 +104,12 @@ public class PersonService {
 
                 dataRow.forEach(cell -> cell.setCellStyle(dataStyle));
             }
-
-
-            // Create a byte array to hold the Excel file data
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             workbook.write(outputStream);
-
             return outputStream.toByteArray();
         } catch (IOException e) {
             throw new IOException("Error generating Excel file: " + e.getMessage());
         }
-    }
-
-    private int calculateCharWidth(String value) {
-        // Implement logic to calculate character width based on your font and locale
-        // This is a simplified example assuming all characters have the same width (can be improved)
-        return value.length();
     }
 
     private XSSFCellStyle createCellStyle(XSSFWorkbook workbook) {
