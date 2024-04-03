@@ -26,5 +26,4 @@ public class BoardMember implements Serializable {
     @ManyToOne
     @JoinColumn(name = "position_id")
     private Position position;
-
 }

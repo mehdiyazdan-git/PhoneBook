@@ -12,14 +12,21 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(AuditionDataIntegrityViolationException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
-    RestErrorResponse handleDataIntegrityViolationException(
-            AuditionDataIntegrityViolationException ex) {
+    RestErrorResponse handleDataIntegrityViolationException(AuditionDataIntegrityViolationException ex) {
         return new RestErrorResponse(
                 HttpStatus.CONFLICT.value(),
                 ex.getMessage(),
                 LocalDateTime.now());
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    RestErrorResponse handleIllegalArgumentException(IllegalArgumentException ex) {
+        return new RestErrorResponse(
+                HttpStatus.BAD_REQUEST.value(),
+                ex.getMessage(),
+                LocalDateTime.now());
+    }
 
     @ExceptionHandler(Exception.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)

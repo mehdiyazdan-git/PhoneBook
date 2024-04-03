@@ -51,7 +51,7 @@ public class UserService {
         return userDetailMapper.toDto(user);
     }
 
-    public UserDetailDto createUser(UserDto request) {
+    public UserDetailDto createUser(UserDetailDto request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new DataIntegrityViolationException("Email already exists");
         }
