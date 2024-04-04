@@ -3,6 +3,7 @@ package com.pishgaman.phonebook.entities;
 import jakarta.persistence.*;
 import lombok.*;
 import java.time.LocalDate;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
@@ -26,7 +27,7 @@ public class Person {
     private String phoneNumber;
     private String email;
     @OneToMany(mappedBy = "person",orphanRemoval = true)
-    private Set<BoardMember> boardMember;
+    private Set<BoardMember> boardMember = new HashSet<>();
 
     @OneToMany(mappedBy = "person", orphanRemoval = true)
     private Set<Document> documents = new LinkedHashSet<>();

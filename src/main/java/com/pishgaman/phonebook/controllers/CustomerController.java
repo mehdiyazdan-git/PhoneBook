@@ -4,11 +4,14 @@ import com.pishgaman.phonebook.dtos.CustomerDto;
 import com.pishgaman.phonebook.dtos.CustomerSelect;
 import com.pishgaman.phonebook.searchforms.CustomerSearch;
 import com.pishgaman.phonebook.services.CustomerService;
+import com.pishgaman.phonebook.utils.FileMediaType;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
@@ -36,6 +39,36 @@ public class CustomerController {
         return ResponseEntity.ok().headers(headers).body(excelData);
     }
 
+    @PostMapping("/import")
+    public ResponseEntity<String> importCustomersFromExcel(@RequestParam("file") MultipartFile file) {
+        try {
+            String message = customerService.importCustomersFromExcel(file);
+            return ResponseEntity.ok(message);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to import from Excel file: " + e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Error processing Excel file: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/template")
+    public ResponseEntity<byte[]> downloadCustomerTemplate() {
+        try {
+            byte[] templateBytes = customerService.generateCustomerTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentDispositionFormData("attachment", "customer_template.xlsx");
+            headers.setContentType(FileMediaType.getMediaType("xlsx"));
+
+            return new ResponseEntity<>(templateBytes, headers, HttpStatus.OK);
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().body(null);
+        }
+    }
 
 
     @GetMapping(path = {"/",""})

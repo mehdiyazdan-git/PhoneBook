@@ -1,71 +1,62 @@
 package com.pishgaman.phonebook.controllers;
 
 import com.pishgaman.phonebook.dtos.YearDto;
-import com.pishgaman.phonebook.exceptions.DatabaseIntegrityViolationException;
+import com.pishgaman.phonebook.searchforms.YearSearch;
 import com.pishgaman.phonebook.services.YearService;
-import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
+import org.springframework.web.server.ResponseStatusException;
 
 @CrossOrigin
 @RestController
-@RequestMapping(path = "/api/years")
+@RequestMapping("/api/years")
+@RequiredArgsConstructor
 public class YearController {
 
     private final YearService yearService;
 
-    @Autowired
-    public YearController(YearService yearService) {
-        this.yearService = yearService;
+    @GetMapping(path = {"/", ""})
+    public ResponseEntity<Page<YearDto>> getAllYears(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "id") String sortBy,
+            @RequestParam(defaultValue = "ASC") String order,YearSearch search) {
+        Page<YearDto> years = yearService.findAll(page, size, sortBy, order,search);
+        return ResponseEntity.ok(years);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<YearDto> getYearById(@PathVariable Long id) {
+        YearDto year = yearService.findById(id);
+        return ResponseEntity.ok(year);
     }
 
     @PostMapping(path = {"/", ""})
     public ResponseEntity<YearDto> createYear(@RequestBody YearDto yearDto) {
-        YearDto createdYear = yearService.createYear(yearDto);
-        return new ResponseEntity<>(createdYear, HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(yearService.createYear(yearDto));
     }
 
-    @GetMapping(path = "/{id}")
-    public ResponseEntity<YearDto> getYear(@PathVariable Long id) {
-        YearDto year = yearService.getYearById(id);
-        if (year != null) {
-            return ResponseEntity.ok(year);
-        } else {
-            return ResponseEntity.notFound().build();
-        }
-    }
-
-    @GetMapping(path = {"/", ""})
-    public ResponseEntity<List<YearDto>> getAllYears() {
-        List<YearDto> years = yearService.getAllYears();
-        return ResponseEntity.ok(years);
-    }
-
-    @PutMapping(path = "/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<YearDto> updateYear(@PathVariable Long id, @RequestBody YearDto yearDto) {
-        YearDto updatedYear = yearService.updateYear(id, yearDto);
-        if (updatedYear != null) {
+        try {
+            YearDto updatedYear = yearService.updateYear(id, yearDto);
             return ResponseEntity.ok(updatedYear);
-        } else {
-            return ResponseEntity.notFound().build();
+        } catch (DataIntegrityViolationException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage(), e);
         }
     }
 
-    @DeleteMapping("/{yearId}")
-    public ResponseEntity<?> deleteYear(@PathVariable("yearId") Long yearId) {
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteYear(@PathVariable Long id) {
         try {
-            yearService.deleteYear(yearId);
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body("سال با موفقیت حذف شد.");
-        } catch (EntityNotFoundException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("سال با شناسه " + yearId + "یافت نشد.");
-        } catch (DatabaseIntegrityViolationException e) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(e.getMessage());
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("خطای سمت سرور...");
+            yearService.deleteYear(id);
+            return ResponseEntity.noContent().build();
+        } catch (DataIntegrityViolationException e) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage(), e);
         }
     }
 }

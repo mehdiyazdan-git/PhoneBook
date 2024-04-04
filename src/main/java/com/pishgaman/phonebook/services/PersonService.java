@@ -10,6 +10,9 @@ import com.pishgaman.phonebook.mappers.PersonMapper;
 import com.pishgaman.phonebook.repositories.PersonRepository;
 import com.pishgaman.phonebook.searchforms.PersonSearch;
 import com.pishgaman.phonebook.specifications.PersonSpecification;
+import com.pishgaman.phonebook.utils.ExcelDataExporter;
+import com.pishgaman.phonebook.utils.ExcelDataImporter;
+import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.BorderStyle;
@@ -22,6 +25,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -43,6 +47,22 @@ public class PersonService {
         Specification<Person> specification = PersonSpecification.getSpecification(search);
         return personRepository.findAll(specification, pageRequest)
                 .map(personMapper::toDto);
+    }
+    public String importPersonsFromExcel(MultipartFile file) throws IOException {
+        List<PersonDto> personDtos = ExcelDataImporter.importData(file, PersonDto.class);
+        List<Person> persons = personDtos.stream().map(personMapper::toEntity).collect(Collectors.toList());
+        personRepository.saveAll(persons);
+        return persons.size() + " persons have been imported successfully.";
+    }
+    public byte[] generatePersonTemplate() throws IOException {
+        return ExcelTemplateGenerator.generateTemplateExcel(PersonDto.class);
+    }
+
+    public byte[] exportPersonsToExcel() throws IOException {
+        List<PersonDto> personDtos = personRepository.findAll().stream().map(personMapper::toDto)
+                .collect(Collectors.toList());
+
+        return ExcelDataExporter.exportData(personDtos, PersonDto.class);
     }
 
     public byte[] generateAllPersonsExcel() throws IOException {
@@ -147,11 +167,6 @@ public class PersonService {
         }
         return null;
     }
-
-
-
-
-
     public List<PersonSelectDto> findPersonByFirstNameOrLastNameContaining(String searchParam) {
         List<Person> persons = personRepository.findPersonByFirstNameOrLastNameContaining(searchParam, searchParam);
         return persons.stream()

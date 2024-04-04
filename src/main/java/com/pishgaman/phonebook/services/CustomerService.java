@@ -8,10 +8,10 @@ import com.pishgaman.phonebook.mappers.CustomerMapper;
 import com.pishgaman.phonebook.repositories.CustomerRepository;
 import com.pishgaman.phonebook.searchforms.CustomerSearch;
 import com.pishgaman.phonebook.specifications.CustomerSpecification;
+import com.pishgaman.phonebook.utils.ExcelRowParser;
+import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
 import jakarta.persistence.EntityNotFoundException;
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.FillPatternType;
-import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -19,9 +19,12 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -36,6 +39,47 @@ public class CustomerService {
     public CustomerService(CustomerRepository customerRepository, CustomerMapper customerMapper) {
         this.customerRepository = customerRepository;
         this.customerMapper = customerMapper;
+    }
+
+    public String importCustomersFromExcel(MultipartFile file) throws IOException {
+        if (file.isEmpty()) {
+            throw new RuntimeException("The provided file is empty.");
+        }
+
+        List<CustomerDto> customerDtos = new ArrayList<>();
+        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
+            Sheet sheet = workbook.getSheetAt(0);
+            Iterator<Row> rows = sheet.rowIterator();
+
+            // Skip the header row
+            if (rows.hasNext()) {
+                rows.next();
+            }
+
+            int rowNum = 1; // Start counting from 1 for the first data row
+            while (rows.hasNext()) {
+                Row currentRow = rows.next();
+                try {
+                    CustomerDto customerDto = ExcelRowParser.parseRowToDto(currentRow, CustomerDto.class, rowNum);
+                    customerDtos.add(customerDto);
+                } catch (RuntimeException e) {
+                    System.out.println(e.getMessage());
+                    e.printStackTrace();
+                    throw new RuntimeException("Error at row " + rowNum + ": " + e.getMessage(), e);
+                }
+                rowNum++;
+            }
+        }
+        List<Customer> customers = customerDtos.stream()
+                .map(customerMapper::toEntity)
+                .collect(Collectors.toList());
+
+        customerRepository.saveAll(customers);
+        return customers.size() + " customers have been imported successfully.";
+    }
+
+    public byte[] generateCustomerTemplate() throws IOException {
+        return ExcelTemplateGenerator.generateTemplateExcel(CustomerDto.class);
     }
 
 

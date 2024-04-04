@@ -2,80 +2,62 @@ package com.pishgaman.phonebook.services;
 
 import com.pishgaman.phonebook.dtos.PositionDto;
 import com.pishgaman.phonebook.entities.Position;
-import com.pishgaman.phonebook.exceptions.EntityAlreadyExistsException;
 import com.pishgaman.phonebook.mappers.PositionMapper;
 import com.pishgaman.phonebook.repositories.PositionRepository;
+import com.pishgaman.phonebook.searchforms.PositionSearch;
+import com.pishgaman.phonebook.specifications.PositionSpecification;
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class PositionService {
     private final PositionRepository positionRepository;
     private final PositionMapper positionMapper;
 
-    @Autowired
-    public PositionService(PositionRepository positionRepository, PositionMapper positionMapper) {
-        this.positionRepository = positionRepository;
-        this.positionMapper = positionMapper;
+    public Page<PositionDto> findAll(int page, int size, String sortBy, String order, PositionSearch search) {
+        Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
+        PageRequest pageRequest = PageRequest.of(page, size, sort);
+        Specification<Position> specification = PositionSpecification.getSpecification(search); // Assuming you have a getSpecification method in PositionSpecification
+        return positionRepository.findAll(specification, pageRequest)
+                .map(positionMapper::toDto);
     }
 
-    public List<PositionDto> findAll() {
-        return positionRepository.findAll().stream().map(positionMapper::toDto).collect(Collectors.toList());
-    }
-
-    public PositionDto findPositionById(Long positionId) {
+    public PositionDto findById(Long positionId) {
         Optional<Position> optionalPosition = positionRepository.findById(positionId);
         if (optionalPosition.isEmpty()) {
-            throw new EntityNotFoundException("موقعیت با شناسه : " + positionId + " یافت نشد.");
+            throw new EntityNotFoundException("پست با شناسه : " + positionId + " یافت نشد.");
         }
         return positionMapper.toDto(optionalPosition.get());
     }
 
     public PositionDto createPosition(PositionDto positionDto) {
-        Position positionByName = positionRepository.findPositionByName(positionDto.getName());
-        if (positionByName != null) {
-            throw new EntityAlreadyExistsException("اشکال! موقعیت با نام '" + positionDto.getName() + "' قبلاً ثبت شده است.");
-        }
         Position entity = positionMapper.toEntity(positionDto);
         Position saved = positionRepository.save(entity);
         return positionMapper.toDto(saved);
     }
 
     public PositionDto updatePosition(Long positionId, PositionDto positionDto) {
-        Position positionById = positionMapper.toEntity(findPositionById(positionId));
-
-        // Check if the new name is unique
-        String newName = positionDto.getName();
-        Position positionByName = positionRepository.findPositionByName(newName);
-
-        if (positionByName != null && !positionByName.getId().equals(positionId)) {
-            // Another position with the same name already exists
-            throw new EntityAlreadyExistsException("اشکال! نام '" + newName + "' برای موقعیت قبلاً ثبت شده است.");
+        Optional<Position> optionalPosition = positionRepository.findById(positionId);
+        if (optionalPosition.isEmpty()){
+            throw new EntityNotFoundException("Position with id" + positionId + " not found");
         }
-
-        Position positionToBeUpdated = positionMapper.partialUpdate(positionDto, positionById);
-        Position updated = positionRepository.save(positionToBeUpdated);
+        Position positionToBeUpdate = positionMapper.partialUpdate(positionDto, optionalPosition.get());
+        Position updated = positionRepository.save(positionToBeUpdate);
         return positionMapper.toDto(updated);
     }
 
-    public String removePosition(Long positionId) {
-        if (positionRepository.existsById(positionId)) {
-            // Add any additional checks here, such as if the position is used in a BoardMember
-            positionRepository.deleteById(positionId);
-            return "موقعیت با موفقیت حذف شد.";
-        } else {
-            throw new EntityNotFoundException("موقعیت با شناسه : " + positionId + " یافت نشد.");
+    public void deletePosition(Long positionId) {
+        if (!positionRepository.existsById(positionId)) {
+            throw new EntityNotFoundException("پست با شناسه : " + positionId + " یافت نشد.");
         }
+        positionRepository.deleteById(positionId);
     }
-
-    public boolean existById(Long id) {
-        return positionRepository.existsById(id);
-    }
-
-    // Additional methods specific to the Position can be added here
 }

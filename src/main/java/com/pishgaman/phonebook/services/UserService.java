@@ -2,16 +2,15 @@ package com.pishgaman.phonebook.services;
 
 
 import com.pishgaman.phonebook.dtos.UserDetailDto;
-import com.pishgaman.phonebook.searchforms.UserSearch;
 import com.pishgaman.phonebook.exceptions.AuditionDataIntegrityViolationException;
 import com.pishgaman.phonebook.mappers.UserDetailMapper;
 import com.pishgaman.phonebook.repositories.ProductRepository;
+import com.pishgaman.phonebook.searchforms.UserSearch;
 import com.pishgaman.phonebook.security.config.JwtService;
 import com.pishgaman.phonebook.security.token.Token;
 import com.pishgaman.phonebook.security.token.TokenRepository;
 import com.pishgaman.phonebook.security.token.TokenType;
 import com.pishgaman.phonebook.security.user.User;
-import com.pishgaman.phonebook.security.user.UserDto;
 import com.pishgaman.phonebook.security.user.UserMapper;
 import com.pishgaman.phonebook.security.user.UserRepository;
 import com.pishgaman.phonebook.specifications.UserSpecification;
@@ -23,6 +22,8 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +39,7 @@ public class UserService {
 
 
     public Page<UserDetailDto> findAll(UserSearch search, int page, int size, String sortBy, String order) {
-        Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
+        Sort sort = Sort.by(Sort.Direction.fromString(order), Objects.equals(sortBy, "fullName") ? "firstname" : sortBy);
         PageRequest pageRequest = PageRequest.of(page, size, sort);
         Specification<User> specification = UserSpecification.getSpecification(search);
         return userRepository.findAll(specification, pageRequest)

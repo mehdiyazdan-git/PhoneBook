@@ -2,73 +2,62 @@ package com.pishgaman.phonebook.services;
 
 import com.pishgaman.phonebook.dtos.YearDto;
 import com.pishgaman.phonebook.entities.Year;
-import com.pishgaman.phonebook.exceptions.DatabaseIntegrityViolationException;
 import com.pishgaman.phonebook.mappers.YearMapper;
-import com.pishgaman.phonebook.repositories.LetterRepository;
 import com.pishgaman.phonebook.repositories.YearRepository;
+import com.pishgaman.phonebook.searchforms.YearSearch;
+import com.pishgaman.phonebook.specifications.YearSpecification;
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class YearService {
     private final YearRepository yearRepository;
     private final YearMapper yearMapper;
 
-    private final LetterRepository letterRepository;
-    @Autowired
-    public YearService(YearRepository yearRepository, YearMapper yearMapper, LetterRepository letterRepository) {
-        this.yearRepository = yearRepository;
-        this.yearMapper = yearMapper;
-        this.letterRepository = letterRepository;
+    public Page<YearDto> findAll(int page, int size, String sortBy, String order, YearSearch search) {
+        Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
+        PageRequest pageRequest = PageRequest.of(page, size, sort);
+        Specification<Year> specification = YearSpecification.getSpecification(search);
+        return yearRepository.findAll(specification, pageRequest)
+                .map(yearMapper::toDto);
+    }
+
+    public YearDto findById(Long yearId) {
+        Optional<Year> optionalYear = yearRepository.findById(yearId);
+        if (optionalYear.isEmpty()) {
+            throw new EntityNotFoundException("سال با شناسه : " + yearId + " یافت نشد.");
+        }
+        return yearMapper.toDto(optionalYear.get());
     }
 
     public YearDto createYear(YearDto yearDto) {
-        Year year = yearMapper.toEntity(yearDto);
-        year = yearRepository.save(year);
-        return yearMapper.toDto(year);
+        Year entity = yearMapper.toEntity(yearDto);
+        Year saved = yearRepository.save(entity);
+        return yearMapper.toDto(saved);
     }
 
-
-    public YearDto getYearById(Long id) {
-        Year year = yearRepository.findById(id).orElse(null);
-        return (year != null) ? yearMapper.toDto(year) : null;
-    }
-
-
-    public List<YearDto> getAllYears() {
-        List<Year> years = yearRepository.findAll();
-        return years.stream()
-                .map(yearMapper::toDto)
-                .collect(Collectors.toList());
-    }
-
-
-    public YearDto updateYear(Long id, YearDto yearDto) {
-        Year year = yearRepository.findById(id).orElse(null);
-        if (year != null) {
-            yearMapper.partialUpdate(yearDto, year);
-            year = yearRepository.save(year);
-            return yearMapper.toDto(year);
+    public YearDto updateYear(Long yearId, YearDto yearDto) {
+        Optional<Year> optionalYear = yearRepository.findById(yearId);
+        if (optionalYear.isEmpty()){
+            throw new EntityNotFoundException("year with id" + yearId + " not found");
         }
-        return null; // Handle not found scenario
+        Year yearToBeUpdate = yearMapper.partialUpdate(yearDto, optionalYear.get());
+        Year updated = yearRepository.save(yearToBeUpdate);
+        return yearMapper.toDto(updated);
     }
 
-
-    public void deleteYear(Long id) {
-        Optional<Year> optionalYear = yearRepository.findById(id);
-        if (optionalYear.isEmpty()) {
-            throw new EntityNotFoundException("سال با شناسه " + id + "یافت نشد.");
+    public void deleteYear(Long yearId) {
+        if (!yearRepository.existsById(yearId)) {
+            throw new EntityNotFoundException("سال با شناسه : " + yearId + " یافت نشد.");
         }
-        Year year = optionalYear.get();
-
-        if (letterRepository.countByYearId(id) > 0) {
-            throw new DatabaseIntegrityViolationException("امکان حذف سال وجود ندارد چون نامه های مرتبط دارد.");
-        }
-        yearRepository.deleteById(id);
+        yearRepository.deleteById(yearId);
     }
 }
