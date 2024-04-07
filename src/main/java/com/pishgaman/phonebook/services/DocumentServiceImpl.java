@@ -7,6 +7,7 @@ import com.pishgaman.phonebook.entities.Document;
 import com.pishgaman.phonebook.mappers.DocumentMapper;
 import com.pishgaman.phonebook.repositories.CompanyRepository;
 import com.pishgaman.phonebook.repositories.DocumentRepository;
+import com.pishgaman.phonebook.repositories.LetterRepository;
 import com.pishgaman.phonebook.repositories.PersonRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -24,6 +25,7 @@ public class DocumentServiceImpl implements DocumentService {
     private final DocumentMapper documentMapper;
     private final PersonRepository personRepository;
     private final CompanyRepository companyRepository;
+    private final LetterRepository letterRepository;
 
     @Override
     public DocumentDto createDocument(DocumentDto documentDto) {
@@ -37,6 +39,9 @@ public class DocumentServiceImpl implements DocumentService {
         }
         if (documentDto.getCompanyId() != null && documentDto.getCompanyId() > 0) {
             document.setCompany( companyRepository.findById( documentDto.getCompanyId()).orElse(null));
+        }
+        if (documentDto.getLetterId() != null && documentDto.getLetterId() > 0) {
+            document.setLetter( letterRepository.findById( documentDto.getLetterId()).orElse(null));
         }
         document.setId( documentDto.getId() );
         document.setDocumentName( documentDto.getDocumentName());
@@ -74,6 +79,20 @@ public class DocumentServiceImpl implements DocumentService {
                 ))
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<DocumentDetailDto> findAllByLetterId(Long letterId) {
+        List<Object[]> documentsData = documentRepository.findAllDocumentsByLetterId(letterId);
+        return documentsData.stream()
+                .map(data -> new DocumentDetailDto(
+                        (Long) data[0], // id
+                        (String) data[1], // documentName
+                        (String) data[2], // documentType
+                        (String) data[3] // fileExtension
+                ))
+                .collect(Collectors.toList());
+    }
+
 
     @Override
     public DocumentDto getDocumentById(Long id) {

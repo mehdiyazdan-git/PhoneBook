@@ -50,7 +50,8 @@ public class LetterSearchDao {
                 root.join("customer", JoinType.LEFT).get("id"),
                 root.join("customer", JoinType.LEFT).get("name"),
                 root.join("company", JoinType.LEFT).get("id"),
-                root.join("company", JoinType.LEFT).get("companyName")
+                root.join("company", JoinType.LEFT).get("companyName"),
+                root.join("year", JoinType.LEFT).get("id")
         ));
 
         TypedQuery<LetterDetailsDto> query = entityManager
@@ -88,7 +89,9 @@ public class LetterSearchDao {
         if (search.getId() != null) {
             predicates.add(criteriaBuilder.equal(root.get("id"),search.getId()));
         }
-
+        if (search.getYearId() != null) {
+            predicates.add(criteriaBuilder.equal(root.get("year").get("id"), search.getYearId()));
+        }
         if (search.getCreationDate() != null && !search.getCreationDate().isEmpty()) {
             LocalDate birthDate = LocalDate.parse(search.getCreationDate(), DateTimeFormatter.ISO_LOCAL_DATE);
             predicates.add(criteriaBuilder.equal(root.get("creationDate"), birthDate));

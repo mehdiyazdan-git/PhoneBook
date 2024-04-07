@@ -16,7 +16,8 @@ import java.util.List;
 
 @Repository
 public interface PersonRepository extends JpaRepository<Person, Long>, JpaSpecificationExecutor<Person> {
-    @Query("select p from Person p where p.firstName = :firstName or p.lastName like concat('%', :lastName, '%')")
+    @Query("select p from Person p where p.firstName like concat('%', :firstName, '%') or p.lastName like concat('%', :lastName, '%')")
     List<Person> findPersonByFirstNameOrLastNameContaining(@Param("firstName") String firstName, @Param("lastName") String lastName);
+
 
 }

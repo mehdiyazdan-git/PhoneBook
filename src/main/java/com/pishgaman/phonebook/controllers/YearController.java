@@ -11,6 +11,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.List;
+
 @CrossOrigin
 @RestController
 @RequestMapping("/api/years")
@@ -28,6 +30,24 @@ public class YearController {
         Page<YearDto> years = yearService.findAll(page, size, sortBy, order,search);
         return ResponseEntity.ok(years);
     }
+
+    @GetMapping(path = "/select")
+    public ResponseEntity<List<YearDto>> findAllYearSelect(
+            @RequestParam(required = false) String searchQuery) {
+        YearSearch yearSearch = new YearSearch();
+        if (searchQuery != null) {
+            try {
+                Long name = Long.parseLong(searchQuery);
+                yearSearch.setName(name);
+            } catch (NumberFormatException e) {
+                // Handle the case where searchQuery is not a valid Long
+            }
+        }
+        List<YearDto> years = yearService.findAllYearSelect(yearSearch);
+        return ResponseEntity.ok(years);
+    }
+
+
 
     @GetMapping("/{id}")
     public ResponseEntity<YearDto> getYearById(@PathVariable Long id) {

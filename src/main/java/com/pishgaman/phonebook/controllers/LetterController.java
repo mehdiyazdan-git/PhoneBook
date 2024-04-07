@@ -35,6 +35,7 @@ public class LetterController {
     @GetMapping(path = "/pageable")
     public ResponseEntity<Page<LetterDetailsDto>> getAllLetterDetails(
             @RequestParam Optional<Long> companyId,
+            @RequestParam Optional<Long> yearId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "id") String sortBy,
@@ -42,6 +43,7 @@ public class LetterController {
             LetterSearch search) {
 
         companyId.ifPresent(search::setCompanyId); // Set senderId in search criteria if present
+        yearId.ifPresent(search::setYearId); // Set receiverId in search criteria if present
 
         Page<LetterDetailsDto> letters = letterService.findAllLetterDetails(search, page, size, sortBy, order);
         return ResponseEntity.ok(letters);

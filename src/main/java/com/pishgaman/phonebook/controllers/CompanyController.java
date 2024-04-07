@@ -53,7 +53,7 @@ public class CompanyController {
     }
 
     @GetMapping(path = "/search")
-    public ResponseEntity<List<CompanySelect>> searchCompanyByNameContaining(@RequestParam(required = false) String searchQuery) {
+    public ResponseEntity<List<CompanySelect>> searchCompanyByNameContaining(@RequestParam(name = "searchQuery",required = false) String searchQuery) {
         List<CompanySelect> companies = companyService.searchCompanyByNameContaining(searchQuery);
         return ResponseEntity.ok(companies);
     }

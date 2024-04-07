@@ -2,6 +2,7 @@ package com.pishgaman.phonebook.repositories;
 
 import com.pishgaman.phonebook.entities.BoardMember;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
@@ -9,7 +10,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface BoardMemberRepository extends JpaRepository<BoardMember, Long> {
+public interface BoardMemberRepository extends JpaRepository<BoardMember, Long>, JpaSpecificationExecutor<BoardMember> {
     @Query("select b from BoardMember b where b.company.id = :companyId")
     List<BoardMember> findAllByCompanyId(@Param("companyId") Long companyId);
 

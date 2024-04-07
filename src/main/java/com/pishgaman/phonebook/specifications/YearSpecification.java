@@ -1,5 +1,6 @@
 package com.pishgaman.phonebook.specifications;
 
+import com.pishgaman.phonebook.entities.Customer;
 import com.pishgaman.phonebook.entities.Year;
 import com.pishgaman.phonebook.searchforms.YearSearch;
 
@@ -12,10 +13,11 @@ public class YearSpecification {
         return (root, query, cb) -> {
             Predicate predicate = cb.conjunction();
 
-            if (search.getName() != null) {
+            if (search != null && search.getName() != null) {
                 predicate = cb.and(predicate, cb.equal(root.get("name"), search.getName()));
             }
             return predicate;
         };
     }
 }
+

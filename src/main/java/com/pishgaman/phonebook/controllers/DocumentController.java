@@ -32,7 +32,8 @@ public class DocumentController {
             @RequestParam("fileExtension") String fileExtension,
             @RequestParam("documentFile") MultipartFile documentFile,
             @RequestParam(value = "personId",required = false) Long personId,
-            @RequestParam(value = "companyId",required = false) Long companyId
+            @RequestParam(value = "companyId",required = false) Long companyId,
+            @RequestParam(value = "letterId",required = false) Long letterId
             ) {
         if (documentFile.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
@@ -53,6 +54,9 @@ public class DocumentController {
         if (companyId != null && companyId instanceof Long){
             documentDto.setCompanyId(companyId);
         }
+        if (letterId != null && letterId instanceof Long){
+            documentDto.setLetterId(letterId);
+        }
         DocumentDto newDocument = documentService.createDocument(documentDto);
         return ResponseEntity.ok(newDocument);
     }
@@ -65,6 +69,12 @@ public class DocumentController {
     @GetMapping(path = "/by-company-id/{companyId}")
     public ResponseEntity<List<DocumentDetailDto>> findAllByCompanyId(@PathVariable Long companyId) {
         List<DocumentDetailDto> documents = documentService.findAllByCompanyId(companyId);
+        return ResponseEntity.ok(documents);
+    }
+
+    @GetMapping(path = "/by-letter-id/{letterId}")
+    public ResponseEntity<List<DocumentDetailDto>> findAllByLetterId(@PathVariable Long letterId) {
+        List<DocumentDetailDto> documents = documentService.findAllByLetterId(letterId);
         return ResponseEntity.ok(documents);
     }
 

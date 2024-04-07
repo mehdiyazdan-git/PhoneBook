@@ -18,4 +18,5 @@ public class LetterSearch {
         private Long customerId;
         private Long companyId;
         private String letterType;
+        private Long yearId;
 }

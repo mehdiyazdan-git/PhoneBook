@@ -19,8 +19,17 @@
 		"/",
 		"local"
 	],
-	"headerList":[],
+	"headerList":[
+		{
+			"enabled":true,
+			"type":"Authorization",
+			"value":"Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiLbjNiy2K_Yp9mGIiwiaWF0IjoxNzEyNDY3NzgwLCJleHAiOjE3MTI1NTQxODB9.OpOvbHx9YSxfEkwnmtpkjm7fkyT8v9-EE6CU7daEpjc"
+		}
+	],
+	"ignoreParseFieldList":[],
 	"maxDescriptionLength":-1,
+	"pmApiKey":"",
+	"pmCollectionId":"",
 	"postScript":"",
 	"preScript":"",
 	"projectList":[
@@ -38,7 +47,9 @@
 		"token":"",
 		"type":"github"
 	},
+	"syncPmAfterSave":false,
 	"urlEncodedKeyValueList":[],
 	"urlParamsKeyValueList":[],
-	"urlSuffix":""
+	"urlSuffix":"",
+	"workspaceId":""
 }

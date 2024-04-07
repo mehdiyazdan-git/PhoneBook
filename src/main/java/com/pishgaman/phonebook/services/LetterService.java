@@ -129,7 +129,7 @@ public class LetterService {
     public String generateLetterNumber(Long companyId,Long yearName) {
         int count = companyService.getLetterCounterById(companyId) + 1;
         String letterPrefix = companyService.getLetterPrefixById(companyId);
-        return letterPrefix + "-" + yearName + "-" + count;
+        return yearName + "/" + letterPrefix + "/" + count;
     }
     protected Year getYear(Long yearName) {
         Optional<Year> optionalYear = yearRepository.findByYearName(yearName);

@@ -12,137 +12,116 @@ import com.pishgaman.phonebook.repositories.BoardMemberRepository;
 import com.pishgaman.phonebook.repositories.CompanyRepository;
 import com.pishgaman.phonebook.repositories.PersonRepository;
 import com.pishgaman.phonebook.repositories.PositionRepository;
+import com.pishgaman.phonebook.searchforms.BoardMemberSearch;
+import com.pishgaman.phonebook.specifications.BoardMemberSpecification;
+import jakarta.persistence.EntityNotFoundException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class BoardMemberService {
     private final BoardMemberRepository boardMemberRepository;
-    private final PersonRepository personRepository;
-    private final PositionRepository positionRepository;
-    private final CompanyRepository companyRepository;
     private final BoardMemberMapper boardMemberMapper;
     private final BoardMemberDetailsMapper boardMemberDetailsMapper;
+    private final PersonRepository personRepository;
+    private final CompanyRepository companyRepository;
+    private final PositionRepository positionRepository;
 
-    public List<BoardMemberDetailsDto> getAllBoardMembers() {
-        List<BoardMember> boardMembers = boardMemberRepository.findAll();
-        return boardMembers.stream()
-                .map(boardMemberDetailsMapper::toDto)
-                .collect(Collectors.toList());
+    public Page<BoardMemberDetailsDto> findAll(int page, int size, String sortBy, String order, BoardMemberSearch search) {
+        try {
+            Sort sort = Sort.by(Sort.Direction.fromString(order), Objects.equals(sortBy, "fullName") ? "personFirstName" : sortBy);
+            PageRequest pageRequest = PageRequest.of(page, size, sort);
+            Specification<BoardMember> specification = BoardMemberSpecification.getSpecification(search);
+            return boardMemberRepository.findAll(specification, pageRequest)
+                    .map(boardMemberDetailsMapper::toDto);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
 
-    public List<BoardMemberDetailsDto> findAllByCompanyId(Long companyId) {
-        Optional<Company> companyOptional = companyRepository.findById(companyId);
-        Company company = companyOptional.orElseThrow(() -> new IllegalArgumentException("شرکت با شناسه " + companyId + " یافت نشد"));
-
-        List<BoardMember> boardMembers = boardMemberRepository.findAllByCompanyId(companyId);
-        return boardMembers.stream()
-                .map(boardMemberDetailsMapper::toDto)
-                .collect(Collectors.toList());
+    public BoardMemberDto findById(Long boardMemberId) {
+        try {
+            Optional<BoardMember> optionalBoardMember = boardMemberRepository.findById(boardMemberId);
+            if (optionalBoardMember.isEmpty()) {
+                throw new EntityNotFoundException("عضو هیئت مدیره با شناسه: " + boardMemberId + " یافت نشد.");
+            }
+            return boardMemberMapper.toDto(optionalBoardMember.get());
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
-
-    @Transactional
     public BoardMemberDto createBoardMember(BoardMemberDto boardMemberDto) {
+        try {
+            BoardMember existingBoardMemberWithPerson = boardMemberRepository.findByPersonIdAndCompanyIdAndPositionId(boardMemberDto.getPersonId(), boardMemberDto.getCompanyId(), boardMemberDto.getPositionId());
+            if (existingBoardMemberWithPerson != null) {
+                throw new IllegalStateException("این شخص قبلا در این شرکت و در این سمت حضور دارد.");
+            }
+            BoardMember existingBoardMember = boardMemberRepository.findByCompanyIdAndPositionId(boardMemberDto.getCompanyId(), boardMemberDto.getPositionId());
+            if (existingBoardMember != null) {
+                throw new IllegalStateException("این سمت در شرکت انتخاب شده قبلا اشغال شده است.");
+            }
 
-        // Check if the position is unique for the person in the company
-        if (isPositionUniqueForPersonInCompany(boardMemberDto.getPersonId(), boardMemberDto.getCompanyId(), boardMemberDto.getPositionId())) {
-            throw new IllegalArgumentException("این پست برای این شخص در این شرکت از قبل اختصاص داده شده است");
+            BoardMember entity = new BoardMember();
+            entity.setPerson(personRepository.findById(boardMemberDto.getPersonId()).orElse(null));
+            entity.setCompany(companyRepository.findById(boardMemberDto.getCompanyId()).orElse(null));
+            entity.setPosition(positionRepository.findById(boardMemberDto.getPositionId()).orElse(null));
+            BoardMember saved = boardMemberRepository.save(entity);
+            return boardMemberMapper.toDto(saved);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
         }
-        // Check if the position is unique for the company
-        if (isPositionUniqueForCompany(boardMemberDto.getCompanyId(), boardMemberDto.getPositionId())) {
-            throw new IllegalArgumentException("پست باید در هر شرکت منحصر به فرد باشد");
-        }
-
-        BoardMember boardMember = new BoardMember();
-
-        // Set the Person
-        Person person = personRepository.findById(boardMemberDto.getPersonId())
-                .orElseThrow(() -> new IllegalArgumentException("شخص با شناسه " + boardMemberDto.getPersonId() + " یافت نشد"));
-        boardMember.setPerson(person);
-
-        // Set the Position
-        Position position = positionRepository.findById(boardMemberDto.getPositionId())
-                .orElseThrow(() -> new IllegalArgumentException("پست با شناسه " + boardMemberDto.getPositionId() + " یافت نشد"));
-        boardMember.setPosition(position);
-
-        // Set the Company
-        Company company = companyRepository.findById(boardMemberDto.getCompanyId())
-                .orElseThrow(() -> new IllegalArgumentException("شرکت با شناسه " + boardMemberDto.getCompanyId() + " یافت نشد"));
-        boardMember.setCompany(company);
-
-        // Save the new BoardMember
-        boardMember = boardMemberRepository.save(boardMember);
-        return boardMemberMapper.toDto(boardMember);
     }
 
 
-    @Transactional
-    public BoardMemberDto updateBoardMember(Long id, BoardMemberDto boardMemberDto) {
-        BoardMember boardMember = boardMemberRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("عضو هیئت مدیره با شناسه " + id + " یافت نشد"));
+    public BoardMemberDto updateBoardMember(Long boardMemberId, BoardMemberDto boardMemberDto) {
+        try {
+            BoardMember existingBoardMemberWithPerson = boardMemberRepository.findByPersonIdAndCompanyIdAndPositionIdAndNotBoardMemberId(boardMemberDto.getPersonId(), boardMemberDto.getCompanyId(), boardMemberDto.getPositionId(), boardMemberId);
+            if (existingBoardMemberWithPerson != null) {
+                throw new IllegalStateException("این شخص قبلا در این شرکت و در این سمت حضور دارد.");
+            }
+            BoardMember existingBoardMember = boardMemberRepository.findByCompanyIdAndPositionIdAndNotBoardMemberId(boardMemberDto.getCompanyId(), boardMemberDto.getPositionId(), boardMemberId);
+            if (existingBoardMember != null) {
+                throw new IllegalStateException("این سمت در شرکت انتخاب شده قبلا اشغال شده است.");
+            }
 
-        // Check if the position is unique for the person in the company, excluding the current board member
-        if (boardMemberRepository.findByPersonIdAndCompanyIdAndPositionIdAndNotBoardMemberId(boardMemberDto.getPersonId(), boardMemberDto.getCompanyId(), boardMemberDto.getPositionId(), id) != null) {
-            throw new IllegalArgumentException("این پست برای این شخص در این شرکت از قبل اختصاص داده شده است");
+            Optional<BoardMember> optionalBoardMember = boardMemberRepository.findById(boardMemberId);
+            if (optionalBoardMember.isEmpty()) {
+                throw new EntityNotFoundException("عضو هیئت مدیره با شناسه: " + boardMemberId + " یافت نشد.");
+            }
+            BoardMember boardMember = optionalBoardMember.get();
+
+            boardMember.setPerson(personRepository.findById(boardMemberDto.getPersonId()).orElse(null));
+            boardMember.setCompany(companyRepository.findById(boardMemberDto.getCompanyId()).orElse(null));
+            boardMember.setPosition(positionRepository.findById(boardMemberDto.getPositionId()).orElse(null));
+            BoardMember updated = boardMemberRepository.save(boardMember);
+            return boardMemberMapper.toDto(updated);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
         }
-
-        // Check if the position is unique for the company, excluding the current board member
-        if (boardMemberRepository.findByCompanyIdAndPositionIdAndNotBoardMemberId(boardMemberDto.getCompanyId(), boardMemberDto.getPositionId(), id) != null) {
-            throw new IllegalArgumentException("پست باید در هر شرکت منحصر به فرد باشد");
-        }
-
-        // Update the Person reference
-        if (boardMemberDto.getPersonId() != null) {
-            Person person = personRepository.findById(boardMemberDto.getPersonId())
-                    .orElseThrow(() -> new IllegalArgumentException("شخص با شناسه " + boardMemberDto.getPersonId() + " یافت نشد"));
-            boardMember.setPerson(person);
-        }
-
-        // Update the Position reference
-        if (boardMemberDto.getPositionId() != null) {
-            Position position = positionRepository.findById(boardMemberDto.getPositionId())
-                    .orElseThrow(() -> new IllegalArgumentException("پست با شناسه " + boardMemberDto.getPositionId() + " یافت نشد"));
-            boardMember.setPosition(position);
-        }
-
-        // Update the Company reference
-        if (boardMemberDto.getCompanyId() != null) {
-            Company company = companyRepository.findById(boardMemberDto.getCompanyId())
-                    .orElseThrow(() -> new IllegalArgumentException("شرکت با شناسه " + boardMemberDto.getCompanyId() + " یافت نشد"));
-            boardMember.setCompany(company);
-        }
-
-        // Save the updated BoardMember
-        boardMember = boardMemberRepository.save(boardMember);
-        return boardMemberMapper.toDto(boardMember);
     }
 
-
-    private boolean isPositionUniqueForCompany(Long companyId, Long positionId) {
-        // Check if there is already a board member with the same position for the same company
-        return boardMemberRepository.findByCompanyIdAndPositionId(companyId, positionId) != null;
+    public void deleteBoardMember(Long boardMemberId) {
+        try {
+            if (!boardMemberRepository.existsById(boardMemberId)) {
+                throw new EntityNotFoundException("عضو هیئت مدیره با شناسه: " + boardMemberId + " یافت نشد.");
+            }
+            boardMemberRepository.deleteById(boardMemberId);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
     }
-
-    private boolean isPositionUniqueForPersonInCompany(Long personId, Long companyId, Long positionId) {
-        // Check if there is already a board member with the same person and position in the company
-        return boardMemberRepository.findByPersonIdAndCompanyIdAndPositionId(personId, companyId, positionId) != null;
-    }
-
-    public void deleteBoardMember(Long id) {
-        boardMemberRepository.deleteById(id);
-    }
-
-    public BoardMemberDto getBoardMemberById(Long id) {
-        BoardMember boardMember = boardMemberRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("شرکت با شناسه " + id + " یافت نشد"));
-        return boardMemberMapper.toDto(boardMember);
-    }
-
 }
-

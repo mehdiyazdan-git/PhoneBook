@@ -13,13 +13,17 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
 
     @Query("""
             select d.id, d.documentName,d.documentType,d.fileExtension from Document d
-            where d.person.id = :personId """)
+            where d.person.id = :personId""")
     List<Object[]> findAllDocumentsByPersonId(@Param("personId") Long personId);
 
     @Query("""
             select d.id, d.documentName,d.documentType,d.fileExtension from Document d
-            where d.company.id = :companyId """)
+            where d.company.id = :companyId""")
     List<Object[]> findAllDocumentsByCompanyId(@Param("companyId") Long companyId);
 
 
+    @Query("""
+            select d.id, d.documentName,d.documentType,d.fileExtension from Document d
+            where d.letter.id = :letterId""")
+    List<Object[]> findAllDocumentsByLetterId(@Param("letterId") Long letterId);
 }

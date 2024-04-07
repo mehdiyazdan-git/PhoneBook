@@ -6,9 +6,7 @@ import lombok.*;
 import org.hibernate.proxy.HibernateProxy;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 @Getter
 @Setter
@@ -50,10 +48,8 @@ public class Letter {
     @Column(name = "letter_state", length = 20)
     private LetterState letterState;
 
-    @OneToMany(mappedBy = "letter", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<Attachment> attachments = new ArrayList<>();
-
-
+    @OneToMany(mappedBy = "letter", orphanRemoval = true)
+    private Set<Document> documents = new LinkedHashSet<>();
 
     public Letter(Long id) {
         this.id = id;

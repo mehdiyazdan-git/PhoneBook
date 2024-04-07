@@ -14,7 +14,9 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -29,6 +31,23 @@ public class YearService {
         return yearRepository.findAll(specification, pageRequest)
                 .map(yearMapper::toDto);
     }
+    public List<YearDto> searchYearByNameContaining(Long searchQuery) {
+        return yearRepository
+                .findByYearName(searchQuery)
+                .stream()
+                .map(yearMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
+    public List<YearDto> findAllYearSelect(YearSearch searchParam) {
+        Specification<Year> specification = YearSpecification.getSpecification(searchParam);
+        return yearRepository
+                .findAll(specification)
+                .stream()
+                .map(yearMapper::toDto)
+                .collect(Collectors.toList());
+    }
+
 
     public YearDto findById(Long yearId) {
         Optional<Year> optionalYear = yearRepository.findById(yearId);

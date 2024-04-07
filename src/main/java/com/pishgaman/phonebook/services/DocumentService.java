@@ -12,6 +12,7 @@ public interface DocumentService {
     DocumentDto createDocument(DocumentDto documentDto);
     List<DocumentDetailDto> findAllByPersonId(Long personId);
     List<DocumentDetailDto> findAllByCompanyId(Long companyId);
+    List<DocumentDetailDto> findAllByLetterId(Long letterId);
     DocumentDto getDocumentById(Long id);
     DocumentDto updateDocument(Long id, DocumentDto documentDto);
     void deleteDocument(Long id);

@@ -18,6 +18,7 @@ public class LetterDetailsDto implements Serializable {
     private String customerName;
     private Long companyId;
     private String companyName;
+    private Long yearId;
 
 
     public LetterDetailsDto(Long id,
@@ -27,7 +28,8 @@ public class LetterDetailsDto implements Serializable {
                             Long customerId,
                             String customerName,
                             Long companyId,
-                            String companyName
+                            String companyName,
+                            Long yearId
     ) {
         this.id = id;
         this.content = content;
@@ -37,6 +39,7 @@ public class LetterDetailsDto implements Serializable {
         this.customerName = customerName;
         this.companyId = companyId;
         this.companyName = companyName;
+        this.yearId = yearId;
     }
 }
 

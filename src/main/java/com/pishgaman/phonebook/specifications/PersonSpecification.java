@@ -1,6 +1,7 @@
 package com.pishgaman.phonebook.specifications;
 
 import com.pishgaman.phonebook.entities.Person;
+import com.pishgaman.phonebook.entities.Position;
 import com.pishgaman.phonebook.searchforms.PersonSearch;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
@@ -41,5 +42,16 @@ public class PersonSpecification {
 
             return predicate;
         };
+    }
+    public static Specification<Person> getSelectSpecification(String searchParam){
+
+        return (root, query, cb) -> {
+            Predicate predicate = cb.conjunction();
+            if (searchParam !=null && !searchParam.isEmpty()) {
+                predicate =(cb.like(root.get("name"), "%" + searchParam.trim() + "%"));
+            }
+            return predicate;
+        };
+
     }
 }

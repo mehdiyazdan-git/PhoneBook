@@ -1,5 +1,6 @@
 package com.pishgaman.phonebook.controllers;
 
+import com.pishgaman.phonebook.dtos.CompanySelect;
 import com.pishgaman.phonebook.dtos.PositionDto;
 import com.pishgaman.phonebook.searchforms.PositionSearch;
 import com.pishgaman.phonebook.services.PositionService;
@@ -10,6 +11,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
+
+import java.util.List;
 
 @CrossOrigin
 @RestController
@@ -27,6 +30,17 @@ public class PositionController {
             @RequestParam(defaultValue = "ASC") String order, PositionSearch search) {
         Page<PositionDto> positions = positionService.findAll(page, size, sortBy, order,search);
         return ResponseEntity.ok(positions);
+    }
+
+    @GetMapping(path = "/select")
+    public ResponseEntity<List<PositionDto>> findAllPositionSelect(@RequestParam(required = false) String queryParam) {
+        List<PositionDto> positionDtoList = positionService.findAllPositionSelect(queryParam);
+        return ResponseEntity.ok(positionDtoList);
+    }
+    @GetMapping(path = "/search")
+    public ResponseEntity<List<PositionDto>> searchCompanyByNameContaining(@RequestParam(required = false) String searchQuery) {
+        List<PositionDto> dtoList = positionService.searchPositionByNameContaining(searchQuery);
+        return ResponseEntity.ok(dtoList);
     }
 
     @GetMapping("/{id}")

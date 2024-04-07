@@ -6,6 +6,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.LinkedHashSet;
+import java.util.Set;
+
 
 @AllArgsConstructor
 @NoArgsConstructor
@@ -17,4 +20,8 @@ public class Position {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;
+
+    @OneToMany(mappedBy = "position", orphanRemoval = true)
+    private Set<BoardMember> boardMembers = new LinkedHashSet<>();
+
 }

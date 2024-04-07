@@ -34,6 +34,10 @@ public class Document {
     @JoinColumn(name = "company_id")
     private Company company;
 
+    @ManyToOne
+    @JoinColumn(name = "letter_id")
+    private Letter letter;
+
     @Override
     public final boolean equals(Object o) {
         if (this == o) return true;

@@ -5,11 +5,14 @@ import com.github.eloyzone.jalalicalendar.JalaliDate;
 import com.github.eloyzone.jalalicalendar.JalaliDateFormatter;
 import com.pishgaman.phonebook.dtos.PersonDto;
 import com.pishgaman.phonebook.dtos.PersonSelectDto;
+import com.pishgaman.phonebook.dtos.PositionDto;
 import com.pishgaman.phonebook.entities.Person;
+import com.pishgaman.phonebook.entities.Position;
 import com.pishgaman.phonebook.mappers.PersonMapper;
 import com.pishgaman.phonebook.repositories.PersonRepository;
 import com.pishgaman.phonebook.searchforms.PersonSearch;
 import com.pishgaman.phonebook.specifications.PersonSpecification;
+import com.pishgaman.phonebook.specifications.PositionSpecification;
 import com.pishgaman.phonebook.utils.ExcelDataExporter;
 import com.pishgaman.phonebook.utils.ExcelDataImporter;
 import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
@@ -47,6 +50,13 @@ public class PersonService {
         Specification<Person> specification = PersonSpecification.getSpecification(search);
         return personRepository.findAll(specification, pageRequest)
                 .map(personMapper::toDto);
+    }
+    public List<PersonSelectDto> findAllPersonSelect(String searchParam) {
+        Specification<Person> specification = PersonSpecification.getSelectSpecification(searchParam);
+        return personRepository.findAll(specification).stream().map(personMapper::toSelectDto).collect(Collectors.toList());
+    }
+    public List<PersonSelectDto> searchPersonByNameContaining(String searchQuery) {
+        return personRepository.findPersonByFirstNameOrLastNameContaining(searchQuery,searchQuery).stream().map(personMapper::toSelectDto).collect(Collectors.toList());
     }
     public String importPersonsFromExcel(MultipartFile file) throws IOException {
         List<PersonDto> personDtos = ExcelDataImporter.importData(file, PersonDto.class);

@@ -1,5 +1,6 @@
 package com.pishgaman.phonebook.specifications;
 
+import com.pishgaman.phonebook.entities.Company;
 import com.pishgaman.phonebook.entities.Position;
 import com.pishgaman.phonebook.searchforms.PositionSearch;
 import jakarta.persistence.criteria.Predicate;
@@ -15,5 +16,16 @@ public class PositionSpecification {
             }
             return predicate;
         };
+    }
+    public static Specification<Position> getSelectSpecification(String searchParam){
+
+        return (root, query, cb) -> {
+            Predicate predicate = cb.conjunction();
+            if (searchParam !=null && !searchParam.isEmpty()) {
+                predicate =(cb.like(root.get("name"), "%" + searchParam.trim() + "%"));
+            }
+            return predicate;
+        };
+
     }
 }

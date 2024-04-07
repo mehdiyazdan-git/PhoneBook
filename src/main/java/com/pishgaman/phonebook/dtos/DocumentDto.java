@@ -22,4 +22,5 @@ public class DocumentDto implements Serializable {
     private byte[] documentFile;
     private Long personId;
     private Long companyId;
+    private Long letterId;
 }
