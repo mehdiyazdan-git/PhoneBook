@@ -93,4 +93,7 @@ public interface LetterRepository extends JpaRepository<Letter, Long> {
 
     @Query("select l from Letter l")
     Page<LetterProjection> findAll(@Param("spec") Specification<Letter> spec, Pageable pageable);
+
+    @Query("select (count(l) > 0) from Letter l where l.company.id = :companyId")
+    boolean existsByCompanyId(@Param("companyId") Long companyId);
 }

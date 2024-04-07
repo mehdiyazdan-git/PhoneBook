@@ -1,13 +1,10 @@
 package com.pishgaman.phonebook.services;
 
-import com.pishgaman.phonebook.dtos.CompanySelect;
 import com.pishgaman.phonebook.dtos.PositionDto;
-import com.pishgaman.phonebook.entities.Company;
 import com.pishgaman.phonebook.entities.Position;
 import com.pishgaman.phonebook.mappers.PositionMapper;
 import com.pishgaman.phonebook.repositories.PositionRepository;
 import com.pishgaman.phonebook.searchforms.PositionSearch;
-import com.pishgaman.phonebook.specifications.CompanySpecification;
 import com.pishgaman.phonebook.specifications.PositionSpecification;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -30,7 +27,7 @@ public class PositionService {
     public Page<PositionDto> findAll(int page, int size, String sortBy, String order, PositionSearch search) {
         Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
         PageRequest pageRequest = PageRequest.of(page, size, sort);
-        Specification<Position> specification = PositionSpecification.getSpecification(search); // Assuming you have a getSpecification method in PositionSpecification
+        Specification<Position> specification = PositionSpecification.getSpecification(search);
         return positionRepository.findAll(specification, pageRequest)
                 .map(positionMapper::toDto);
     }

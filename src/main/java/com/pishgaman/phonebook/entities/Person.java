@@ -26,11 +26,15 @@ public class Person {
     private String address;
     private String phoneNumber;
     private String email;
+
     @OneToMany(mappedBy = "person",orphanRemoval = true)
     private Set<BoardMember> boardMember = new HashSet<>();
 
     @OneToMany(mappedBy = "person", orphanRemoval = true)
     private Set<Document> documents = new LinkedHashSet<>();
+
+    @OneToMany(mappedBy = "person", orphanRemoval = true)
+    private Set<Shareholder> shareholders = new LinkedHashSet<>();
 
     public Person(Long id, String firstName, String lastName, String mobile, String email) {
         this.id = id;

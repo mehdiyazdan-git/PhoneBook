@@ -6,11 +6,13 @@ import com.pishgaman.phonebook.entities.Customer;
 import com.pishgaman.phonebook.exceptions.EntityAlreadyExistsException;
 import com.pishgaman.phonebook.mappers.CustomerMapper;
 import com.pishgaman.phonebook.repositories.CustomerRepository;
+import com.pishgaman.phonebook.repositories.LetterRepository;
 import com.pishgaman.phonebook.searchforms.CustomerSearch;
 import com.pishgaman.phonebook.specifications.CustomerSpecification;
 import com.pishgaman.phonebook.utils.ExcelRowParser;
 import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,15 +33,10 @@ import java.util.stream.Collectors;
 
 
 @Service
+@RequiredArgsConstructor
 public class CustomerService {
     private final CustomerRepository customerRepository;
     private final CustomerMapper customerMapper;
-
-    @Autowired
-    public CustomerService(CustomerRepository customerRepository, CustomerMapper customerMapper) {
-        this.customerRepository = customerRepository;
-        this.customerMapper = customerMapper;
-    }
 
     public String importCustomersFromExcel(MultipartFile file) throws IOException {
         if (file.isEmpty()) {

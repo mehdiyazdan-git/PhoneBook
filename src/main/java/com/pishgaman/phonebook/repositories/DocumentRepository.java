@@ -26,4 +26,10 @@ public interface DocumentRepository extends JpaRepository<Document, Long> {
             select d.id, d.documentName,d.documentType,d.fileExtension from Document d
             where d.letter.id = :letterId""")
     List<Object[]> findAllDocumentsByLetterId(@Param("letterId") Long letterId);
+
+    @Query("select (count(d) > 0) from Document d where d.company.id = :companyId")
+    boolean existsByCompanyId(@Param("companyId") Long companyId);
+
+    @Query("select (count(d) > 0) from Document d where d.person.id = :personId")
+    boolean existsByPersonId(@Param("personId") Long personId);
 }

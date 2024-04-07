@@ -8,10 +8,11 @@ import com.pishgaman.phonebook.dtos.CompanySelect;
 import com.pishgaman.phonebook.entities.Company;
 import com.pishgaman.phonebook.exceptions.EntityAlreadyExistsException;
 import com.pishgaman.phonebook.mappers.CompanyMapper;
-import com.pishgaman.phonebook.repositories.CompanyRepository;
+import com.pishgaman.phonebook.repositories.*;
 import com.pishgaman.phonebook.searchforms.CompanySearch;
 import com.pishgaman.phonebook.specifications.CompanySpecification;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,15 +32,15 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class CompanyService {
     private final CompanyRepository companyRepository;
     private final CompanyMapper companyMapper;
+    private final DocumentRepository documentRepository;
+    private final BoardMemberRepository boardMemberRepository;
+    private final ShareholderRepository shareholderRepository;
+    private final LetterRepository letterRepository;
 
-    @Autowired
-    public CompanyService(CompanyRepository companyRepository, CompanyMapper companyMapper) {
-        this.companyRepository = companyRepository;
-        this.companyMapper = companyMapper;
-    }
 
     public byte[] generateAllCompaniesExcel() throws IOException {
         try {
@@ -306,6 +307,18 @@ public class CompanyService {
     public String removeCompany(Long companyId) {
         boolean result = companyRepository.existsById(companyId);
         if (result) {
+            if (documentRepository.existsByPersonId(companyId)) {
+                throw new RuntimeException("امکان حذف شرکت وجود ندارا. ابتدا همه سندهای این شرکت را حذف کنید.");
+            }
+            if (boardMemberRepository.existsByPersonId(companyId)){
+                throw new RuntimeException("امکان حذف شرکت وجود ندارا. ابتدا همه سمت های این شرکت را حذف کنید.");
+            }
+            if (shareholderRepository.existsByPersonId(companyId)){
+                throw new RuntimeException("امکان حذف شرکت وجود ندارا. ابتدا همه سهامدارای این شرکت را حذف کنید.");
+            }
+            if (letterRepository.existsByCompanyId(companyId)){
+                throw new RuntimeException("امکان حذف شرکت وجود ندارا. ابتدا همه نامه های این شرکت را حذف کنید.");
+            }
             companyRepository.deleteById(companyId);
             return "شرکت با موفقیت حذف شد.";
         }

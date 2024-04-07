@@ -30,4 +30,12 @@ public interface BoardMemberRepository extends JpaRepository<BoardMember, Long>,
             select b from BoardMember b
             where b.person.id = :personId and b.company.id = :companyId and b.position.id = :positionId and b.id <> :boardMemberId""")
     BoardMember findByPersonIdAndCompanyIdAndPositionIdAndNotBoardMemberId(@Param("personId") Long personId, @Param("companyId") Long companyId, @Param("positionId") Long positionId, @Param("boardMemberId") Long boardMemberId);
+
+
+
+    @Query("select (count(b) > 0) from BoardMember b where b.company.id = :companyId")
+    boolean existsByCompanyId(@Param("companyId") Long companyId);
+
+    @Query("select (count(b) > 0) from BoardMember b where b.person.id = :personId")
+    boolean existsByPersonId(@Param("personId") Long personId);
 }
