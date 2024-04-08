@@ -1,5 +1,6 @@
 package com.pishgaman.phonebook.security.auth;
 
+import com.pishgaman.phonebook.exceptions.UnauthorizedException;
 import com.pishgaman.phonebook.security.config.JwtService;
 import com.pishgaman.phonebook.security.token.Token;
 import com.pishgaman.phonebook.security.token.TokenRepository;
@@ -8,6 +9,7 @@ import com.pishgaman.phonebook.security.user.User;
 import com.pishgaman.phonebook.security.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -85,6 +87,7 @@ public class AuthenticationService {
         }
         try {
             String username = jwtService.extractUsername(refreshToken);
+            System.out.println("extractUsername: " + username);
 
             if (username == null) {
                 throw new IllegalArgumentException("Invalid refresh token format");
@@ -92,23 +95,24 @@ public class AuthenticationService {
             Optional<User> userOptional = userRepository.findByUsername(username);
 
             if (userOptional.isEmpty()) {
-                throw new IllegalArgumentException("User not found for the provided username: " + username);
+                throw new BadCredentialsException("نام کاربری یافت نشد");
             }
             User user = userOptional.get();
 
             if (!jwtService.isTokenValid(refreshToken, user)) {
-                throw new IllegalArgumentException("Invalid or expired refresh token");
+                throw new UnauthorizedException("توکن رفرش نامعتبر است");
             }
             var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
 
             if (validUserTokens.isEmpty()) {
-                String accessToken = jwtService.generateToken(user);
+                System.out.println("invalid tokens");
                 revokeAllUserTokens(user);
+                String accessToken = jwtService.generateToken(user);
                 saveUserToken(user, accessToken);
 
                 return AuthenticationResponse.builder()
                         .accessToken(accessToken)
-                        .refreshToken(refreshToken)
+                        .refreshToken(jwtService.generateRefreshToken(user))
                         .userName(user.getUsername())
                         .role(user.getRole().name())
                         .build();

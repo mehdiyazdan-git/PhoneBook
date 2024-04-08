@@ -43,6 +43,8 @@ public class Shareholder {
     @Column(nullable = true)
     private byte[] scannedShareCertificate;
 
+    private String fileExtension;
+
     public enum ShareType {
         REGISTERED, BEARER
     }

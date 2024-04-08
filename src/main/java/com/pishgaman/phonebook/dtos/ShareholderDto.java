@@ -25,4 +25,5 @@ public class ShareholderDto implements Serializable {
     private Shareholder.ShareType shareType;
     private Long companyId;
     private byte[] scannedShareCertificate;
+    private String fileExtension;
 }

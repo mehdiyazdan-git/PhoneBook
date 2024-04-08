@@ -1,9 +1,9 @@
 package com.pishgaman.phonebook.controllers;
 
-import com.pishgaman.phonebook.dtos.ShareholderDetailDto;
-import com.pishgaman.phonebook.dtos.ShareholderDto;
-import com.pishgaman.phonebook.searchforms.ShareholderSearchForm;
-import com.pishgaman.phonebook.services.ShareHolderService;
+import com.pishgaman.phonebook.dtos.TaxPaymentSlipDetailDto;
+import com.pishgaman.phonebook.dtos.TaxPaymentSlipDto;
+import com.pishgaman.phonebook.searchforms.TaxPaymentSlipSearchForm;
+import com.pishgaman.phonebook.services.TaxPaymentSlipService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
@@ -17,15 +17,15 @@ import java.io.IOException;
 
 @CrossOrigin
 @RestController
-@RequestMapping(path = "/api/shareholders")
+@RequestMapping(path = "/api/tax-payment-slips")
 @RequiredArgsConstructor
-public class ShareHolderController {
-    private final ShareHolderService shareHolderService;
+public class TaxPaymentSlipController {
+    private final TaxPaymentSlipService taxPaymentSlipService;
 
     @PostMapping("/import")
-    public ResponseEntity<String> importShareHoldersFromExcel(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<String> importTaxPaymentSlipsFromExcel(@RequestParam("file") MultipartFile file) {
         try {
-            String message = shareHolderService.uploadFromExcelFile(file);
+            String message = taxPaymentSlipService.uploadFromExcelFile(file);
             return ResponseEntity.ok(message);
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -40,48 +40,49 @@ public class ShareHolderController {
     }
 
     @GetMapping("/export")
-    public ResponseEntity<byte[]> exportShareHoldersToExcel() throws IOException {
-        byte[] excelData = shareHolderService.exportToExcelFile();
+    public ResponseEntity<byte[]> exportTaxPaymentSlipsToExcel() throws IOException {
+        byte[] excelData = taxPaymentSlipService.exportToExcelFile();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         headers.setContentDisposition(ContentDisposition.attachment()
-                .filename("all_shareholders.xlsx")
+                .filename("all_tax_payment_slips.xlsx")
                 .build());
         return ResponseEntity.ok().headers(headers).body(excelData);
     }
 
     @GetMapping
-    public ResponseEntity<Page<ShareholderDetailDto>> getAllShareHolders(
-            ShareholderSearchForm search,
+    public ResponseEntity<Page<TaxPaymentSlipDetailDto>> getAllTaxPaymentSlips(
+            TaxPaymentSlipSearchForm search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "ASC") String order) {
-        Page<ShareholderDetailDto> shareholders = shareHolderService.findAll(search, page, size, sortBy, order);
-        return ResponseEntity.ok(shareholders);
+        Page<TaxPaymentSlipDetailDto> taxPaymentSlips = taxPaymentSlipService.findAll(search, page, size, sortBy, order);
+        return ResponseEntity.ok(taxPaymentSlips);
     }
 
-    @GetMapping("/{shareHolderId}")
-    public ResponseEntity<ShareholderDto> getShareHolderById(@PathVariable Long shareHolderId) {
-        ShareholderDto shareholder = shareHolderService.findById(shareHolderId);
-        return ResponseEntity.ok(shareholder);
+    @GetMapping("/{taxPaymentSlipId}")
+    public ResponseEntity<TaxPaymentSlipDto> getTaxPaymentSlipById(@PathVariable Long taxPaymentSlipId) {
+        TaxPaymentSlipDto taxPaymentSlip = taxPaymentSlipService.findById(taxPaymentSlipId);
+        return ResponseEntity.ok(taxPaymentSlip);
     }
 
     @PostMapping
-    public ResponseEntity<ShareholderDto> createShareHolder(@RequestBody ShareholderDto shareholderDto) {
-        ShareholderDto createdShareholder = shareHolderService.createShareHolder(shareholderDto);
-        return new ResponseEntity<>(createdShareholder, HttpStatus.CREATED);
+    public ResponseEntity<TaxPaymentSlipDto> createTaxPaymentSlip(@RequestBody TaxPaymentSlipDto taxPaymentSlipDto) {
+        TaxPaymentSlipDto createdTaxPaymentSlip = taxPaymentSlipService.createTaxPaymentSlip(taxPaymentSlipDto);
+        return new ResponseEntity<>(createdTaxPaymentSlip, HttpStatus.CREATED);
     }
+
     @CrossOrigin(
             origins = "http://localhost:3000",
             methods = {RequestMethod.GET, RequestMethod.POST},
             allowedHeaders = "*")
-    @PostMapping("/{shareHolderId}/upload-file")
-    public ResponseEntity<String> uploadShareHolderFile(
-            @PathVariable("shareHolderId") Long shareHolderId,
+    @PostMapping("/{taxPaymentSlipId}/upload-file")
+    public ResponseEntity<String> uploadTaxPaymentSlipFile(
+            @PathVariable("taxPaymentSlipId") Long taxPaymentSlipId,
             @RequestParam("file") MultipartFile file) {
         try {
-            shareHolderService.saveShareHolderFile(shareHolderId, file);
+            taxPaymentSlipService.saveTaxPaymentSlipFile(taxPaymentSlipId, file);
             return ResponseEntity.ok("File uploaded successfully.");
         } catch (IOException e) {
             e.printStackTrace();
@@ -97,12 +98,13 @@ public class ShareHolderController {
                     .body("Error processing file: " + e.getMessage());
         }
     }
-    @GetMapping("/{shareHolderId}/download-file")
-    public ResponseEntity<Resource> downloadShareHolderFile(@PathVariable Long shareHolderId) {
-        ShareholderDto shareholder = shareHolderService.findById(shareHolderId);
 
-        byte[] fileData = shareholder.getScannedShareCertificate();
-        String fileExtension = shareholder.getFileExtension().toLowerCase();
+    @GetMapping("/{taxPaymentSlipId}/download-file")
+    public ResponseEntity<Resource> downloadTaxPaymentSlipFile(@PathVariable Long taxPaymentSlipId) {
+        TaxPaymentSlipDto taxPaymentSlip = taxPaymentSlipService.findById(taxPaymentSlipId);
+
+        byte[] fileData = taxPaymentSlip.getFile();
+        String fileExtension = taxPaymentSlip.getFileExtension().toLowerCase();
         MediaType mediaType = switch (fileExtension.toLowerCase()) {
             case "pdf" -> MediaType.APPLICATION_PDF;
             case "docx", "doc" ->
@@ -120,27 +122,26 @@ public class ShareHolderController {
         };
 
         if (fileData == null) {
-            throw new EntityNotFoundException("No file found for shareholder with id: " + shareHolderId);
+            throw new EntityNotFoundException("No file found for tax payment slip with id: " + taxPaymentSlipId);
         }
-        String fileName = "certificate_" + shareHolderId + "." + fileExtension;
-        ByteArrayResource resource = new ByteArrayResource(shareholder.getScannedShareCertificate());
+        String fileName = "certificate_" + taxPaymentSlipId + "." + fileExtension;
+        ByteArrayResource resource = new ByteArrayResource(taxPaymentSlip.getFile());
         return ResponseEntity.ok()
                 .contentType(mediaType)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
                 .body(resource);
     }
 
-
-    @PutMapping("/{shareHolderId}")
-    public ResponseEntity<ShareholderDto> updateShareHolder(@PathVariable("shareHolderId") Long shareHolderId, @RequestBody ShareholderDto shareholderDto) {
-        ShareholderDto updatedShareholder = shareHolderService.updateShareHolder(shareHolderId, shareholderDto);
-        return ResponseEntity.status(HttpStatus.OK).body(updatedShareholder);
+    @PutMapping("/{taxPaymentSlipId}")
+    public ResponseEntity<TaxPaymentSlipDto> updateTaxPaymentSlip(@PathVariable("taxPaymentSlipId") Long taxPaymentSlipId, @RequestBody TaxPaymentSlipDto taxPaymentSlipDto) {
+        TaxPaymentSlipDto updatedTaxPaymentSlip = taxPaymentSlipService.updateTaxPaymentSlip(taxPaymentSlipId, taxPaymentSlipDto);
+        return ResponseEntity.status(HttpStatus.OK).body(updatedTaxPaymentSlip);
     }
 
-    @DeleteMapping("/{shareHolderId}")
-    public ResponseEntity<String> deleteShareHolder(@PathVariable("shareHolderId") Long shareHolderId) {
+    @DeleteMapping("/{taxPaymentSlipId}")
+    public ResponseEntity<String> deleteTaxPaymentSlip(@PathVariable("taxPaymentSlipId") Long taxPaymentSlipId) {
         try {
-            String message = shareHolderService.removeShareHolder(shareHolderId);
+            String message = taxPaymentSlipService.removeTaxPaymentSlip(taxPaymentSlipId);
             return ResponseEntity.status(HttpStatus.NO_CONTENT).body(message);
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
@@ -148,3 +149,4 @@ public class ShareHolderController {
         }
     }
 }
+

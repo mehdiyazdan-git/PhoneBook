@@ -23,6 +23,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -98,6 +99,7 @@ public class ShareHolderService {
 
         byte[] fileBytes = file.getBytes();
         shareholder.setScannedShareCertificate(Arrays.copyOf(fileBytes, fileBytes.length));
+        shareholder.setFileExtension(Objects.requireNonNull(file.getOriginalFilename()).substring(file.getOriginalFilename().lastIndexOf(".") + 1));
         shareHolderRepository.save(shareholder);
     }
 }

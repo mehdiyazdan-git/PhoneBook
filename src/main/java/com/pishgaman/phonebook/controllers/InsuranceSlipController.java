@@ -1,9 +1,9 @@
 package com.pishgaman.phonebook.controllers;
 
-import com.pishgaman.phonebook.dtos.ShareholderDetailDto;
-import com.pishgaman.phonebook.dtos.ShareholderDto;
-import com.pishgaman.phonebook.searchforms.ShareholderSearchForm;
-import com.pishgaman.phonebook.services.ShareHolderService;
+import com.pishgaman.phonebook.dtos.InsuranceSlipDetailDto;
+import com.pishgaman.phonebook.dtos.InsuranceSlipDto;
+import com.pishgaman.phonebook.searchforms.InsuranceSlipSearchForm;
+import com.pishgaman.phonebook.services.InsuranceSlipService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
@@ -17,15 +17,15 @@ import java.io.IOException;
 
 @CrossOrigin
 @RestController
-@RequestMapping(path = "/api/shareholders")
+@RequestMapping(path = "/api/insurance-slips")
 @RequiredArgsConstructor
-public class ShareHolderController {
-    private final ShareHolderService shareHolderService;
+public class InsuranceSlipController {
+    private final InsuranceSlipService insuranceSlipService;
 
     @PostMapping("/import")
-    public ResponseEntity<String> importShareHoldersFromExcel(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<String> importInsuranceSlipsFromExcel(@RequestParam("file") MultipartFile file) {
         try {
-            String message = shareHolderService.uploadFromExcelFile(file);
+            String message = insuranceSlipService.uploadFromExcelFile(file);
             return ResponseEntity.ok(message);
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -40,48 +40,49 @@ public class ShareHolderController {
     }
 
     @GetMapping("/export")
-    public ResponseEntity<byte[]> exportShareHoldersToExcel() throws IOException {
-        byte[] excelData = shareHolderService.exportToExcelFile();
+    public ResponseEntity<byte[]> exportInsuranceSlipsToExcel() throws IOException {
+        byte[] excelData = insuranceSlipService.exportToExcelFile();
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         headers.setContentDisposition(ContentDisposition.attachment()
-                .filename("all_shareholders.xlsx")
+                .filename("all_insurance_slips.xlsx")
                 .build());
         return ResponseEntity.ok().headers(headers).body(excelData);
     }
 
     @GetMapping
-    public ResponseEntity<Page<ShareholderDetailDto>> getAllShareHolders(
-            ShareholderSearchForm search,
+    public ResponseEntity<Page<InsuranceSlipDetailDto>> getAllInsuranceSlips(
+            InsuranceSlipSearchForm search,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "ASC") String order) {
-        Page<ShareholderDetailDto> shareholders = shareHolderService.findAll(search, page, size, sortBy, order);
-        return ResponseEntity.ok(shareholders);
+        Page<InsuranceSlipDetailDto> insuranceSlips = insuranceSlipService.findAll(search, page, size, sortBy, order);
+        return ResponseEntity.ok(insuranceSlips);
     }
 
-    @GetMapping("/{shareHolderId}")
-    public ResponseEntity<ShareholderDto> getShareHolderById(@PathVariable Long shareHolderId) {
-        ShareholderDto shareholder = shareHolderService.findById(shareHolderId);
-        return ResponseEntity.ok(shareholder);
+    @GetMapping("/{insuranceSlipId}")
+    public ResponseEntity<InsuranceSlipDto> getInsuranceSlipById(@PathVariable Long insuranceSlipId) {
+        InsuranceSlipDto insuranceSlip = insuranceSlipService.findById(insuranceSlipId);
+        return ResponseEntity.ok(insuranceSlip);
     }
 
     @PostMapping
-    public ResponseEntity<ShareholderDto> createShareHolder(@RequestBody ShareholderDto shareholderDto) {
-        ShareholderDto createdShareholder = shareHolderService.createShareHolder(shareholderDto);
-        return new ResponseEntity<>(createdShareholder, HttpStatus.CREATED);
+    public ResponseEntity<InsuranceSlipDto> createInsuranceSlip(@RequestBody InsuranceSlipDto insuranceSlipDto) {
+        InsuranceSlipDto createdInsuranceSlip = insuranceSlipService.createInsuranceSlip(insuranceSlipDto);
+        return new ResponseEntity<>(createdInsuranceSlip, HttpStatus.CREATED);
     }
+
     @CrossOrigin(
             origins = "http://localhost:3000",
             methods = {RequestMethod.GET, RequestMethod.POST},
             allowedHeaders = "*")
-    @PostMapping("/{shareHolderId}/upload-file")
-    public ResponseEntity<String> uploadShareHolderFile(
-            @PathVariable("shareHolderId") Long shareHolderId,
+    @PostMapping("/{insuranceSlipId}/upload-file")
+    public ResponseEntity<String> uploadInsuranceSlipFile(
+            @PathVariable("insuranceSlipId") Long insuranceSlipId,
             @RequestParam("file") MultipartFile file) {
         try {
-            shareHolderService.saveShareHolderFile(shareHolderId, file);
+            insuranceSlipService.saveInsuranceSlipFile(insuranceSlipId, file);
             return ResponseEntity.ok("File uploaded successfully.");
         } catch (IOException e) {
             e.printStackTrace();
@@ -97,12 +98,13 @@ public class ShareHolderController {
                     .body("Error processing file: " + e.getMessage());
         }
     }
-    @GetMapping("/{shareHolderId}/download-file")
-    public ResponseEntity<Resource> downloadShareHolderFile(@PathVariable Long shareHolderId) {
-        ShareholderDto shareholder = shareHolderService.findById(shareHolderId);
 
-        byte[] fileData = shareholder.getScannedShareCertificate();
-        String fileExtension = shareholder.getFileExtension().toLowerCase();
+    @GetMapping("/{insuranceSlipId}/download-file")
+    public ResponseEntity<Resource> downloadInsuranceSlipFile(@PathVariable Long insuranceSlipId) {
+        InsuranceSlipDto insuranceSlip = insuranceSlipService.findById(insuranceSlipId);
+
+        byte[] fileData = insuranceSlip.getFile();
+        String fileExtension = insuranceSlip.getFileName().toLowerCase();
         MediaType mediaType = switch (fileExtension.toLowerCase()) {
             case "pdf" -> MediaType.APPLICATION_PDF;
             case "docx", "doc" ->
@@ -120,27 +122,26 @@ public class ShareHolderController {
         };
 
         if (fileData == null) {
-            throw new EntityNotFoundException("No file found for shareholder with id: " + shareHolderId);
+            throw new EntityNotFoundException("No file found for insurance slip with id: " + insuranceSlipId);
         }
-        String fileName = "certificate_" + shareHolderId + "." + fileExtension;
-        ByteArrayResource resource = new ByteArrayResource(shareholder.getScannedShareCertificate());
+        String fileName = "certificate_" + insuranceSlipId + "." + fileExtension;
+        ByteArrayResource resource = new ByteArrayResource(insuranceSlip.getFile());
         return ResponseEntity.ok()
                 .contentType(mediaType)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
                 .body(resource);
     }
 
-
-    @PutMapping("/{shareHolderId}")
-    public ResponseEntity<ShareholderDto> updateShareHolder(@PathVariable("shareHolderId") Long shareHolderId, @RequestBody ShareholderDto shareholderDto) {
-        ShareholderDto updatedShareholder = shareHolderService.updateShareHolder(shareHolderId, shareholderDto);
-        return ResponseEntity.status(HttpStatus.OK).body(updatedShareholder);
+    @PutMapping("/{insuranceSlipId}")
+    public ResponseEntity<InsuranceSlipDto> updateInsuranceSlip(@PathVariable("insuranceSlipId") Long insuranceSlipId, @RequestBody InsuranceSlipDto insuranceSlipDto) {
+        InsuranceSlipDto updatedInsuranceSlip = insuranceSlipService.updateInsuranceSlip(insuranceSlipId, insuranceSlipDto);
+        return ResponseEntity.status(HttpStatus.OK).body(updatedInsuranceSlip);
     }
 
-    @DeleteMapping("/{shareHolderId}")
-    public ResponseEntity<String> deleteShareHolder(@PathVariable("shareHolderId") Long shareHolderId) {
+    @DeleteMapping("/{insuranceSlipId}")
+    public ResponseEntity<String> deleteInsuranceSlip(@PathVariable("insuranceSlipId") Long insuranceSlipId) {
         try {
-            String message = shareHolderService.removeShareHolder(shareHolderId);
+            String message = insuranceSlipService.removeInsuranceSlip(insuranceSlipId);
             return ResponseEntity.status(HttpStatus.NO_CONTENT).body(message);
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
