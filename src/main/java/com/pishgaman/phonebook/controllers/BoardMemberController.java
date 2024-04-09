@@ -2,6 +2,7 @@ package com.pishgaman.phonebook.controllers;
 
 import com.pishgaman.phonebook.dtos.BoardMemberDetailsDto;
 import com.pishgaman.phonebook.dtos.BoardMemberDto;
+import com.pishgaman.phonebook.exceptions.BoardMemberAlreadyExistsException;
 import com.pishgaman.phonebook.searchforms.BoardMemberSearch;
 import com.pishgaman.phonebook.services.BoardMemberService;
 import jakarta.persistence.EntityNotFoundException;
@@ -38,37 +39,58 @@ public class BoardMemberController {
     }
 
     @PostMapping(path = {"/", ""})
-    public ResponseEntity<BoardMemberDto> createBoardMember(@RequestBody BoardMemberDto boardMemberDto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(boardMemberService.createBoardMember(boardMemberDto));
-    }
-
-    @PutMapping("/{id}")
-    public ResponseEntity<BoardMemberDto> updateBoardMember(@PathVariable Long id, @RequestBody BoardMemberDto boardMemberDto) {
+    public ResponseEntity<?> createBoardMember(@RequestBody BoardMemberDto boardMemberDto) {
         try {
-            BoardMemberDto updatedBoardMember = boardMemberService.updateBoardMember(id, boardMemberDto);
-            return ResponseEntity.ok(updatedBoardMember);
-        } catch (DataIntegrityViolationException e) {
-            e.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Position is already occupied in this company.");
-        } catch (EntityNotFoundException e) {
-            e.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Board member with ID: " + id + " not found.");
-        } catch (IllegalStateException e) {
-            e.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+            BoardMemberDto createdBoardMember = boardMemberService.createBoardMember(boardMemberDto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(createdBoardMember);
+        } catch (BoardMemberAlreadyExistsException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         } catch (Exception e) {
-            e.printStackTrace();
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "An unexpected error occurred.");
+            System.out.println(e.getMessage());
+            System.out.println(e.getCause());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("مشکلی در سرور رخ داده است");
         }
     }
 
+
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateBoardMember(@PathVariable Long id, @RequestBody BoardMemberDto boardMemberDto) {
+        try {
+            BoardMemberDto updatedBoardMember = boardMemberService.updateBoardMember(id, boardMemberDto);
+            return ResponseEntity.ok(updatedBoardMember);
+        } catch (BoardMemberAlreadyExistsException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        } catch (EntityNotFoundException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            System.out.println(e.getCause());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("مشکلی در سرور رخ داده است");
+        }
+    }
+
+
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteBoardMember(@PathVariable Long id) {
+    public ResponseEntity<?> deleteBoardMember(@PathVariable Long id) {
         try {
             boardMemberService.deleteBoardMember(id);
             return ResponseEntity.noContent().build();
         } catch (DataIntegrityViolationException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage(), e);
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        } catch (EntityNotFoundException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            System.out.println(e.getCause());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("مشکلی در سرور رخ داده است");
         }
     }
 }

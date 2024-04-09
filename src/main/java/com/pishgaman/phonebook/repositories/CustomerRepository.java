@@ -15,6 +15,9 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSp
 //    @Query("select c from customer c where c.name = :name")
     Customer findCustomerByName(@Param("name") String name);
 
+    @Query("select c from Customer c where c.name = :name and c.id <> :id")
+    Customer findCustomerByNameAndIdNot(@Param("name") String name, @Param("id") Long id);
+
 
 //    @Query("select c from customer c where c.name like concat('%', :customerName, '%')")
     List<Customer> findCustomerByNameContains(@Param("customerName") String customerName);

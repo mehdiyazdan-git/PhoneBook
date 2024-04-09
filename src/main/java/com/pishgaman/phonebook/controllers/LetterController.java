@@ -70,10 +70,9 @@ public class LetterController {
     public ResponseEntity<String> createLetter(@RequestBody LetterDto letterDto) {
         try {
             letterService.createLetter(letterDto);
-            return ResponseEntity.status(HttpStatus.CREATED).body("letter created successfully");
-        }catch (RuntimeException e){
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+            return ResponseEntity.status(HttpStatus.CREATED).body("نامه با موفقیت ایجاد شد");
+        }catch (IllegalArgumentException | EntityNotFoundException e){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 
@@ -81,10 +80,9 @@ public class LetterController {
     public ResponseEntity<String> updateLetter(@PathVariable Long letterId, @RequestBody LetterDto letterDto) {
         try {
             letterService.updateLetter(letterId, letterDto);
-            return ResponseEntity.status(HttpStatus.OK).body("letter updated successfully");
-        }catch (RuntimeException e){
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.OK).body(e.getMessage());
+            return ResponseEntity.ok("نامه با موفقیت ویرایش شد.");
+        } catch (IllegalArgumentException | EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
 
@@ -95,10 +93,10 @@ public class LetterController {
 
         try {
             letterService.updateLetterState(letterId, letterState);
-            return ResponseEntity.ok("Letter state updated successfully.");
+            return ResponseEntity.ok("وضعیت نامه با موفقیت ویرایش شد.");
         } catch (Exception e) {
             // Handle exceptions appropriately (e.g., log the error)
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error updating letter state.");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("خطا در ویرایش وضعیت نامه");
         }
     }
 

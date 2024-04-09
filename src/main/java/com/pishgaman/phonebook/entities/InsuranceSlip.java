@@ -48,9 +48,29 @@ public class InsuranceSlip {
     private Company company; // شرکت
 
     public enum SlipType {
-        PREMIUM, // حق بیمه
-        FINE // جریمه
+        INSURANCE_PREMIUM("حق بیمه"),
+        PENALTY("جریمه");
+
+        private final String value;
+
+        SlipType(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public static SlipType fromValue(String value) {
+            for (SlipType type : values()) {
+                if (type.getValue().equals(value)) {
+                    return type;
+                }
+            }
+            throw new IllegalArgumentException("Unknown value: " + value);
+        }
     }
+
 
     @Override
     public final boolean equals(Object o) {

@@ -16,4 +16,10 @@ public interface YearRepository extends JpaRepository<Year, Long>, JpaSpecificat
     @Query("select y from Year y where y.name = :year")
     Optional<Year> findByYearName(@Param("year") Long year);
 
+    @Query("select y from Year y where y.name = :name")
+    Optional<Year> findYearByName(@Param("name") Long name);
+
+    @Query("select y from Year y where y.name = :name and y.id <> :id")
+    Optional<Year> findYearByNameAndIdNot(@Param("name") Long name, @Param("id") Long id);
+
 }

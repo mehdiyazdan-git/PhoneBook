@@ -4,6 +4,7 @@ import com.pishgaman.phonebook.dtos.TaxPaymentSlipDetailDto;
 import com.pishgaman.phonebook.entities.TaxPaymentSlip;
 import org.mapstruct.*;
 
+@Mapper(unmappedTargetPolicy = ReportingPolicy.IGNORE, componentModel = "spring")
 public interface TaxPaymentSlipDetailMapper {
     @Mapping(source = "companyCompanyName", target = "company.companyName")
     @Mapping(source = "companyId", target = "company.id")

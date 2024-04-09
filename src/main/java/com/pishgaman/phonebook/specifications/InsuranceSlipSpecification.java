@@ -5,6 +5,8 @@ import com.pishgaman.phonebook.searchforms.InsuranceSlipSearchForm;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -13,6 +15,20 @@ public class InsuranceSlipSpecification {
     public static Specification<InsuranceSlip> bySearchForm(InsuranceSlipSearchForm searchForm) {
         return (root, query, criteriaBuilder) -> {
             List<Predicate> predicates = new ArrayList<>();
+
+            if (searchForm.getCompanyId() != null){
+                predicates.add(criteriaBuilder.equal(root.get("company").get("id"), searchForm.getCompanyId()));
+            }
+            if (searchForm.getIssueDate() != null && !searchForm.getIssueDate().isEmpty()) {
+                String trimmed = searchForm.getIssueDate().trim();
+                String[] dateParts = trimmed.split("-");
+                int year = Integer.parseInt(dateParts[0]);
+                int month = Integer.parseInt(dateParts[1]);
+                int day = Integer.parseInt(dateParts[2]);
+                LocalDate date = LocalDate.of(year, month, day);
+                predicates.add(criteriaBuilder.equal(root.get("issueDate"), date));
+            }
+
 
             if (searchForm.getCompanyName() != null) {
                 Predicate companyNamePredicate = criteriaBuilder.like(root.get("company").get("name"), "%" + searchForm.getCompanyName() + "%");
@@ -34,17 +50,29 @@ public class InsuranceSlipSpecification {
                 predicates.add(amountPredicate);
             }
 
-            if (searchForm.getStartDate() != null) {
-                Predicate startDatePredicate = criteriaBuilder.equal(root.get("startDate"), searchForm.getStartDate());
-                predicates.add(startDatePredicate);
+
+            if (searchForm.getStartDate() != null && !searchForm.getStartDate().isEmpty()) {
+                String trimmed = searchForm.getStartDate().trim();
+                String[] dateParts = trimmed.split("-");
+                int year = Integer.parseInt(dateParts[0]);
+                int month = Integer.parseInt(dateParts[1]);
+                int day = Integer.parseInt(dateParts[2]);
+                LocalDate date = LocalDate.of(year, month, day);
+                predicates.add(criteriaBuilder.equal(root.get("startDate"), date));
             }
 
-            if (searchForm.getEndDate() != null) {
-                Predicate endDatePredicate = criteriaBuilder.equal(root.get("endDate"), searchForm.getEndDate());
-                predicates.add(endDatePredicate);
+            if (searchForm.getEndDate() != null && !searchForm.getEndDate().isEmpty()) {
+                String trimmed = searchForm.getEndDate().trim();
+                String[] dateParts = trimmed.split("-");
+                int year = Integer.parseInt(dateParts[0]);
+                int month = Integer.parseInt(dateParts[1]);
+                int day = Integer.parseInt(dateParts[2]);
+                LocalDate date = LocalDate.of(year, month, day);
+                predicates.add(criteriaBuilder.equal(root.get("endDate"), date));
             }
 
             return criteriaBuilder.and(predicates.toArray(new Predicate[0]));
         };
     }
+
 }

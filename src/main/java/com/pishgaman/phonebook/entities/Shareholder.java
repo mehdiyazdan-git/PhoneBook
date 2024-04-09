@@ -46,6 +46,7 @@ public class Shareholder {
     private String fileExtension;
 
     public enum ShareType {
-        REGISTERED, BEARER
+        REGISTERED,
+        BEARER;
     }
 }

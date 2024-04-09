@@ -22,6 +22,9 @@ import java.util.List;
 @Repository
 public interface LetterRepository extends JpaRepository<Letter, Long> {
 
+    @Query("select (count(l) > 0) from Letter l where l.year.id = :year_id")
+    boolean existsByYearId(@Param("year_id") Long year_id);
+
     @Query("select count(l) from Letter l where l.year.id = :id")
     long countByYearId(@Param("id") Long id);
 

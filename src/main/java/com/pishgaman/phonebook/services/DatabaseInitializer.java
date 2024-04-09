@@ -3,7 +3,10 @@ package com.pishgaman.phonebook.services;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.pishgaman.phonebook.dtos.InsuranceSlipDto;
 import com.pishgaman.phonebook.dtos.LetterDto;
+import com.pishgaman.phonebook.dtos.ShareholderDto;
+import com.pishgaman.phonebook.dtos.TaxPaymentSlipDto;
 import com.pishgaman.phonebook.entities.*;
 import com.pishgaman.phonebook.repositories.*;
 import jakarta.annotation.PostConstruct;
@@ -29,6 +32,9 @@ public class DatabaseInitializer {
     private final PositionRepository positionRepository;
     private final LetterTypeRepository letterTypeRepository;
     private final LetterRepository letterRepository;
+    private final InsuranceSlipRepository insuranceSlipRepository;
+    private final TaxPaymentSlipRepository taxPaymentSlipRepository;
+    private final ShareholderRepository shareholderRepository;
 
     @PostConstruct
     public void init() throws IOException {
@@ -113,5 +119,84 @@ public class DatabaseInitializer {
                 letterRepository.save(letter);
             }
         }
+        if (insuranceSlipRepository.count() == 0) {
+            ClassPathResource insuranceSlipResource = new ClassPathResource("insurance_slip.json");
+
+            String insuranceJsonData = new String(Files.readAllBytes(Paths.get(insuranceSlipResource.getURI())));
+            List<Map<String, Object>> insuranceSlipMaps = mapper.readValue(insuranceJsonData, new TypeReference<>() {
+            });
+
+            List<InsuranceSlipDto> insuranceSlipDtoList = new ArrayList<>();
+            for (Map<String, Object> insuranceMap : insuranceSlipMaps) {
+                InsuranceSlipDto insuranceSlipDto = mapper.convertValue(insuranceMap, InsuranceSlipDto.class);
+                insuranceSlipDtoList.add(insuranceSlipDto);
+            }
+            for (InsuranceSlipDto slipDto : insuranceSlipDtoList) {
+                InsuranceSlip insuranceSlip = new InsuranceSlip();
+                insuranceSlip.setCompany(companyRepository.findById(slipDto.getCompanyId()).orElse(null));
+                insuranceSlip.setId(slipDto.getId());
+                insuranceSlip.setAmount(slipDto.getAmount());
+                insuranceSlip.setType(slipDto.getType());
+                insuranceSlip.setIssueDate(slipDto.getIssueDate());
+                insuranceSlip.setStartDate(slipDto.getStartDate());
+                insuranceSlip.setEndDate(slipDto.getEndDate());
+                insuranceSlip.setSlipNumber(slipDto.getSlipNumber());
+                insuranceSlipRepository.save(insuranceSlip);
+            }
+        }
+        if (taxPaymentSlipRepository.count() == 0) {
+            ClassPathResource resource = new ClassPathResource("tax_payment_slip.json");
+
+            String jsonData = new String(Files.readAllBytes(Paths.get(resource.getURI())));
+
+            List<Map<String, Object>> taxPaymentSlipMaps = mapper.readValue(jsonData, new TypeReference<>() {
+            });
+
+            List<TaxPaymentSlipDto> taxPaymentSlipDtoList = new ArrayList<>();
+            for (Map<String, Object> taxPaymentSlipMap : taxPaymentSlipMaps) {
+                TaxPaymentSlipDto taxPaymentSlipDto = mapper.convertValue(taxPaymentSlipMap,TaxPaymentSlipDto.class);
+                taxPaymentSlipDtoList.add(taxPaymentSlipDto);
+            }
+            for (TaxPaymentSlipDto taxPaymentSlipDto : taxPaymentSlipDtoList) {
+                TaxPaymentSlip taxPaymentSlip = new TaxPaymentSlip();
+                taxPaymentSlip.setCompany(companyRepository.findById(taxPaymentSlipDto.getCompanyId()).orElse(null));
+                taxPaymentSlip.setId(taxPaymentSlipDto.getId());
+                taxPaymentSlip.setAmount(taxPaymentSlipDto.getAmount());
+                taxPaymentSlip.setType(taxPaymentSlipDto.getType());
+                taxPaymentSlip.setIssueDate(taxPaymentSlipDto.getIssueDate());
+                taxPaymentSlip.setAmount(taxPaymentSlipDto.getAmount());
+                taxPaymentSlip.setPeriod(taxPaymentSlipDto.getPeriod());
+                taxPaymentSlip.setSlipNumber(taxPaymentSlipDto.getSlipNumber());
+                taxPaymentSlipRepository.save(taxPaymentSlip);
+            }
+        }
+        if (shareholderRepository.count() == 0) {
+            ClassPathResource resource = new ClassPathResource("shareholder.json");
+
+            String jsonData = new String(Files.readAllBytes(Paths.get(resource.getURI())));
+
+            List<Map<String, Object>> shareholderMaps = mapper.readValue(jsonData, new TypeReference<>() {
+            });
+
+            List<ShareholderDto> shareholderDtoList = new ArrayList<>();
+            for (Map<String, Object> shareholderMap : shareholderMaps) {
+                ShareholderDto shareholderDto = mapper.convertValue(shareholderMap, ShareholderDto.class);
+                shareholderDtoList.add(shareholderDto);
+            }
+            for (ShareholderDto shareholderDto : shareholderDtoList) {
+                Shareholder shareholder = new Shareholder();
+                shareholder.setId(shareholderDto.getId());
+                shareholder.setPerson(personRepository.findById(shareholderDto.getPersonId()).orElse(null));
+                shareholder.setNumberOfShares(shareholderDto.getNumberOfShares());
+                shareholder.setPercentageOwnership(shareholderDto.getPercentageOwnership());
+                shareholder.setSharePrice(shareholderDto.getSharePrice());
+                shareholder.setShareType(shareholderDto.getShareType());
+                shareholder.setCompany(companyRepository.findById(shareholderDto.getCompanyId()).orElse(null));
+                shareholder.setScannedShareCertificate(shareholderDto.getScannedShareCertificate());
+                shareholder.setFileExtension(shareholderDto.getFileExtension());
+                shareholderRepository.save(shareholder);
+            }
+        }
+
     }
 }

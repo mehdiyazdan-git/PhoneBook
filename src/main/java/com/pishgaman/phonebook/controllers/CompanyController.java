@@ -2,7 +2,7 @@ package com.pishgaman.phonebook.controllers;
 
 import com.pishgaman.phonebook.dtos.CompanyDto;
 import com.pishgaman.phonebook.dtos.CompanySelect;
-import com.pishgaman.phonebook.dtos.CustomerSelect;
+import com.pishgaman.phonebook.exceptions.EntityAlreadyExistsException;
 import com.pishgaman.phonebook.searchforms.CompanySearch;
 import com.pishgaman.phonebook.services.CompanyService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -65,15 +65,24 @@ public class CompanyController {
     }
 
     @PostMapping(path = {"/", ""})
-    public ResponseEntity<CompanyDto> createCompany(@RequestBody CompanyDto companyDto) {
-        CompanyDto createdCompany = companyService.createCompany(companyDto);
-        return new ResponseEntity<>(createdCompany, HttpStatus.CREATED);
+    public ResponseEntity<?> createCompany(@RequestBody CompanyDto companyDto) {
+        try {
+            CompanyDto createdCompany = companyService.createCompany(companyDto);
+            return new ResponseEntity<>(createdCompany, HttpStatus.CREATED);
+        } catch (EntityAlreadyExistsException e) {
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
     }
 
     @PutMapping("/{companyId}")
-    public ResponseEntity<CompanyDto> updateCompany(@PathVariable("companyId") Long companyId, @RequestBody CompanyDto companyDto) {
-        CompanyDto updatedCompany = companyService.updateCompany(companyId, companyDto);
-        return ResponseEntity.ok(updatedCompany);
+    public ResponseEntity<?> updateCompany(@PathVariable("companyId") Long companyId, @RequestBody CompanyDto companyDto) {
+        try {
+            CompanyDto updatedCompany = companyService.updateCompany(companyId, companyDto);
+            return ResponseEntity.ok(updatedCompany);
+        } catch (EntityAlreadyExistsException e){
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
     }
 
     @DeleteMapping("/{companyId}")

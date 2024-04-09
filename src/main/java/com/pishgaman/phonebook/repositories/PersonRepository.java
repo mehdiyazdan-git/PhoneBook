@@ -13,11 +13,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PersonRepository extends JpaRepository<Person, Long>, JpaSpecificationExecutor<Person> {
     @Query("select p from Person p where p.firstName like concat('%', :firstName, '%') or p.lastName like concat('%', :lastName, '%')")
     List<Person> findPersonByFirstNameOrLastNameContaining(@Param("firstName") String firstName, @Param("lastName") String lastName);
+
+    @Query("select p from Person p where p.nationalId = :nationalId")
+    Optional<Person> findPersonByNationalId(@Param("nationalId") String nationalId);
 
 
 }

@@ -6,6 +6,7 @@ import com.github.eloyzone.jalalicalendar.JalaliDateFormatter;
 import com.pishgaman.phonebook.dtos.CompanyDto;
 import com.pishgaman.phonebook.dtos.CompanySelect;
 import com.pishgaman.phonebook.entities.Company;
+import com.pishgaman.phonebook.exceptions.DatabaseIntegrityViolationException;
 import com.pishgaman.phonebook.exceptions.EntityAlreadyExistsException;
 import com.pishgaman.phonebook.mappers.CompanyMapper;
 import com.pishgaman.phonebook.repositories.*;
@@ -286,8 +287,7 @@ public class CompanyService {
         Company companyByName = companyRepository.findCompanyByCompanyName(newName);
 
         if (companyByName != null && !companyByName.getId().equals(companyId)) {
-            // Another company with the same name already exists
-            throw new EntityAlreadyExistsException("اشکال! نام '" + newName + "' برای شرکت قبلاً ثبت شده است.");
+            throw new EntityAlreadyExistsException("اشکال! نام '" + newName + "' قبلاً ثبت شده است.");
         }
 
         Company companyToBeUpdate = companyMapper.partialUpdate(companyDto, companyById);
@@ -308,16 +308,16 @@ public class CompanyService {
         boolean result = companyRepository.existsById(companyId);
         if (result) {
             if (documentRepository.existsByPersonId(companyId)) {
-                throw new RuntimeException("امکان حذف شرکت وجود ندارا. ابتدا همه سندهای این شرکت را حذف کنید.");
+                throw new DatabaseIntegrityViolationException("امکان حذف شرکت وجود ندارد. ابتدا همه سندهای این شرکت را حذف کنید.");
             }
             if (boardMemberRepository.existsByPersonId(companyId)){
-                throw new RuntimeException("امکان حذف شرکت وجود ندارا. ابتدا همه سمت های این شرکت را حذف کنید.");
+                throw new DatabaseIntegrityViolationException("امکان حذف شرکت وجود ندارد. ابتدا همه سمت های این شرکت را حذف کنید.");
             }
             if (shareholderRepository.existsByPersonId(companyId)){
-                throw new RuntimeException("امکان حذف شرکت وجود ندارا. ابتدا همه سهامدارای این شرکت را حذف کنید.");
+                throw new DatabaseIntegrityViolationException("امکان حذف شرکت وجود ندارد. ابتدا همه سهامدارهای این شرکت را حذف کنید.");
             }
             if (letterRepository.existsByCompanyId(companyId)){
-                throw new RuntimeException("امکان حذف شرکت وجود ندارا. ابتدا همه نامه های این شرکت را حذف کنید.");
+                throw new DatabaseIntegrityViolationException("امکان حذف شرکت وجود ندارد. ابتدا همه نامه های این شرکت را حذف کنید.");
             }
             companyRepository.deleteById(companyId);
             return "شرکت با موفقیت حذف شد.";

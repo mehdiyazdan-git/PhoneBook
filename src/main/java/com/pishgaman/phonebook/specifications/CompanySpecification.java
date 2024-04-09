@@ -52,6 +52,15 @@ public class CompanySpecification {
                 LocalDate registrationDate = LocalDate.parse(search.getRegistrationDate(), DateTimeFormatter.ISO_LOCAL_DATE);
                 predicates.add(cb.equal(root.get("registrationDate"), registrationDate));
             }
+            if (search.getRegistrationDate() != null && !search.getRegistrationDate().isEmpty()) {
+                String trimmed = search.getRegistrationDate().trim();
+                String[] dateParts = trimmed.split("-");
+                int year = Integer.parseInt(dateParts[0]);
+                int month = Integer.parseInt(dateParts[1]);
+                int day = Integer.parseInt(dateParts[2]);
+                LocalDate date = LocalDate.of(year, month, day);
+                predicates.add(cb.equal(root.get("registrationDate"), date));
+            }
             if (StringUtils.hasText(search.getAddress())) {
                 predicates.add(cb.like(root.get("address"), "%" + search.getAddress().trim() + "%"));
             }

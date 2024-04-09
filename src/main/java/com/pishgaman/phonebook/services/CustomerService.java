@@ -132,7 +132,6 @@ public class CustomerService {
         }
     }
 
-
     private XSSFCellStyle createCellStyle(XSSFWorkbook workbook) {
         XSSFCellStyle style = workbook.createCellStyle();
         style.setBorderTop(BorderStyle.THIN);
@@ -176,7 +175,6 @@ public class CustomerService {
                 .collect(Collectors.toList());
     }
 
-
     private Customer findCustomerById(Long customerId) {
         Optional<Customer> optionalCustomer = customerRepository.findById(customerId);
         if (optionalCustomer.isEmpty()) {
@@ -188,7 +186,6 @@ public class CustomerService {
     public CustomerDto findById(Long customerId) {
         return customerMapper.toDto(findCustomerById(customerId));
     }
-
     public CustomerDto createCustomer(CustomerDto customerDto) {
         Customer customerByName = customerRepository.findCustomerByName(customerDto.getName());
         if (customerByName != null) {
@@ -200,18 +197,21 @@ public class CustomerService {
     }
 
     public CustomerDto updateCustomer(Long customerId, CustomerDto customerDto) {
-        Customer customerById = findCustomerById(customerId);
+        Optional<Customer> optionalCustomer = customerRepository.findById(customerId);
 
-        String newName = customerDto.getName();
-        Customer customerByName = customerRepository.findCustomerByName(newName);
+        if (optionalCustomer.isEmpty()) {
+            throw new EntityNotFoundException("اشکال! مشتری با شناسه : " + customerId + " یافت نشد.");
+        }
+        Customer customerById = optionalCustomer.get();
 
-        if (customerByName != null && !customerByName.getId().equals(customerId)) {
-            // Another customer with the same name already exists
-            throw new EntityAlreadyExistsException("اشکال! نام '" + newName + "' برای مشتری قبلاً ثبت شده است.");
+        if (customerRepository.findCustomerByNameAndIdNot(customerDto.getName(),customerId) != null) {
+            throw new EntityAlreadyExistsException("اشکال! نام '" + customerDto.getName() + "'  قبلاً ثبت شده است.");
         }
 
         Customer customerToBeUpdate = customerMapper.partialUpdate(customerDto, customerById);
+        customerToBeUpdate.setRegisterDate(customerDto.getRegisterDate());
         Customer updated = customerRepository.save(customerToBeUpdate);
+        System.out.println("Customer updated successfully!");
         return customerMapper.toDto(updated);
     }
 

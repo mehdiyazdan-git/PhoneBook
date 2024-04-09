@@ -34,7 +34,7 @@ public class DocumentController {
             @RequestParam(value = "personId",required = false) Long personId,
             @RequestParam(value = "companyId",required = false) Long companyId,
             @RequestParam(value = "letterId",required = false) Long letterId
-            ) {
+            ) throws Exception {
         if (documentFile.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }

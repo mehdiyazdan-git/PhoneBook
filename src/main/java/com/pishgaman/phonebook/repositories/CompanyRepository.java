@@ -15,6 +15,9 @@ public interface CompanyRepository extends JpaRepository<Company, Long>, JpaSpec
     @Query("select c from Company c where c.companyName = ?1")
     Company findCompanyByCompanyName(@Param("companyName") String companyName);
 
+    @Query("select c from Company c where c.companyName = :companyName and c.id <> :id")
+    Company findCompanyByCompanyNameAndIdNot(@Param("companyName") String companyName, @Param("id") Long id);
+
     @Query("select c from Company c where c.companyName like concat('%', :companyName, '%')")
     List<Company> findByCompanyNameContains(@Param("companyName") String companyName);
 

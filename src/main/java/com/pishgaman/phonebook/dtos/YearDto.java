@@ -15,4 +15,5 @@ import java.io.Serializable;
 public class YearDto implements Serializable {
     private Long id;
     private Long name;
+    private Long startingLetterNumber;
 }

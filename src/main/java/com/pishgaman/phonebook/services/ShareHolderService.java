@@ -49,13 +49,25 @@ public class ShareHolderService {
         return ExcelDataExporter.exportData(shareholderDtoList, ShareholderDto.class);
     }
 
-    public Page<ShareholderDetailDto> findAll(ShareholderSearchForm search, int page, int size, String sortBy, String order) {
-        Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
-        PageRequest pageRequest = PageRequest.of(page, size, sort);
-        Specification<Shareholder> specification = ShareholderSpecification.bySearchForm(search);
-        return shareHolderRepository.findAll(specification, pageRequest)
-                .map(shareholderDetailMapper::toDto);
+    public Page<ShareholderDetailDto> findAll(
+            ShareholderSearchForm search,
+            int page,
+            int size,
+            String sortBy,
+            String order
+    ) {
+        try {
+            Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
+            PageRequest pageRequest = PageRequest.of(page, size, sort);
+            Specification<Shareholder> specification = ShareholderSpecification.bySearchForm(search);
+            return shareHolderRepository.findAll(specification, pageRequest)
+                    .map(shareholderDetailMapper::toDto);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new RuntimeException("An error occurred while fetching shareholders", e);
+        }
     }
+
 
 
     private Shareholder findShareHolderById(Long ShareHolderId) {

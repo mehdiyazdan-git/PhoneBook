@@ -8,6 +8,8 @@ import com.pishgaman.phonebook.dtos.PersonSelectDto;
 import com.pishgaman.phonebook.dtos.PositionDto;
 import com.pishgaman.phonebook.entities.Person;
 import com.pishgaman.phonebook.entities.Position;
+import com.pishgaman.phonebook.exceptions.DatabaseIntegrityViolationException;
+import com.pishgaman.phonebook.exceptions.DuplicateNationalIdException;
 import com.pishgaman.phonebook.mappers.PersonMapper;
 import com.pishgaman.phonebook.repositories.BoardMemberRepository;
 import com.pishgaman.phonebook.repositories.DocumentRepository;
@@ -119,6 +121,8 @@ public class PersonService {
     }
 
     public PersonDto createPerson(PersonDto personDto){
+        Optional<Person> optionalPerson = personRepository.findPersonByNationalId(personDto.getNationalId());
+        if (optionalPerson.isPresent()) throw new DuplicateNationalIdException("کد ملی تکراری است.");
         Person entity = personMapper.toEntity(personDto);
         Person saved = personRepository.save(entity);
         return personMapper.toDto(saved);
@@ -135,13 +139,13 @@ public class PersonService {
         boolean result = personRepository.existsById(personId);
         if (result){
             if (documentRepository.existsByPersonId(personId)) {
-                throw new RuntimeException("امکان حذف فرد وجود ندارا. ابتدا همه سندهای این فرد را حذف کنید.");
+                throw new DatabaseIntegrityViolationException("امکان حذف فرد وجود ندارا. ابتدا همه سندهای این فرد را حذف کنید.");
             }
             if (boardMemberRepository.existsByPersonId(personId)){
-                throw new RuntimeException("امکان حذف فرد وجود ندارا. ابتدا همه سمت های این فرد را حذف کنید.");
+                throw new DatabaseIntegrityViolationException("امکان حذف فرد وجود ندارا. ابتدا همه سمت های این فرد را حذف کنید.");
             }
             if (shareholderRepository.existsByPersonId(personId)){
-                throw new RuntimeException("امکان حذف فرد وجود ندارا. ابتدا همه سهامدارای این فرد را حذف کنید.");
+                throw new DatabaseIntegrityViolationException("امکان حذف فرد وجود ندارا. ابتدا همه سهام های این فرد را حذف کنید.");
             }
             personRepository.deleteById(personId);
             return "فرستنده با موفقیت حذف شد. ";

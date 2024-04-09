@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @CrossOrigin
 @RestController
@@ -53,10 +54,12 @@ public class TaxPaymentSlipController {
     @GetMapping
     public ResponseEntity<Page<TaxPaymentSlipDetailDto>> getAllTaxPaymentSlips(
             TaxPaymentSlipSearchForm search,
+            @RequestParam Optional<Long> companyId,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "5") int size,
             @RequestParam(defaultValue = "id") String sortBy,
             @RequestParam(defaultValue = "ASC") String order) {
+        companyId.ifPresent(search::setCompanyId);
         Page<TaxPaymentSlipDetailDto> taxPaymentSlips = taxPaymentSlipService.findAll(search, page, size, sortBy, order);
         return ResponseEntity.ok(taxPaymentSlips);
     }

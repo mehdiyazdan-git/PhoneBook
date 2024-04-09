@@ -1,6 +1,7 @@
 package com.pishgaman.phonebook.dtos;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.pishgaman.phonebook.entities.Shareholder;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -23,6 +24,7 @@ public class ShareholderDetailDto implements Serializable {
     private Integer numberOfShares;
     private BigDecimal percentageOwnership;
     private BigDecimal sharePrice;
+    private Shareholder.ShareType shareType;
     private Long companyId;
     private String companyCompanyName;
     private boolean hasFile;

@@ -16,6 +16,9 @@ public class YearSpecification {
             if (search != null && search.getName() != null) {
                 predicate = cb.and(predicate, cb.equal(root.get("name"), search.getName()));
             }
+            if (search != null && search.getStartingLetterNumber() != null){
+                predicate = cb.and(predicate, cb.equal(root.get("startingLetterNumber"), search.getStartingLetterNumber()));
+            }
             return predicate;
         };
     }

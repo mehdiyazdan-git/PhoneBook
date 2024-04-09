@@ -1,0 +1,134 @@
+[
+  {
+    "numberOfShares": 100,
+    "percentageOwnership": 10.00,
+    "sharePrice": 1000.00,
+    "companyId": 1,
+    "id": null,
+    "personId": 1,
+    "fileExtension": null,
+    "shareType": "REGISTERED",
+    "scannedShareCertificate": null
+  },
+  {
+    "numberOfShares": 250,
+    "percentageOwnership": 2.52,
+    "sharePrice": 13000.00,
+    "companyId": 1,
+    "id": null,
+    "personId": 2,
+    "fileExtension": null,
+    "shareType": "BEARER",
+    "scannedShareCertificate": null
+  },
+  {
+    "numberOfShares": 45,
+    "percentageOwnership": 6.78,
+    "sharePrice": 556784.00,
+    "companyId": 1,
+    "id": null,
+    "personId": 3,
+    "fileExtension": null,
+    "shareType": "BEARER",
+    "scannedShareCertificate": null
+  },
+  {
+    "numberOfShares": 312,
+    "percentageOwnership": 10.00,
+    "sharePrice": 7895214.00,
+    "companyId": 1,
+    "id": null,
+    "personId": 5,
+    "fileExtension": null,
+    "shareType": "REGISTERED",
+    "scannedShareCertificate": null
+  },
+  {
+    "numberOfShares": 250,
+    "percentageOwnership": 2.52,
+    "sharePrice": 4567000.00,
+    "companyId": 1,
+    "id": null,
+    "personId": 2,
+    "fileExtension": null,
+    "shareType": "BEARER",
+    "scannedShareCertificate": null
+  },
+  {
+    "numberOfShares": 45,
+    "percentageOwnership": 6.78,
+    "sharePrice": 715000.00,
+    "companyId": 1,
+    "id": null,
+    "personId": 7,
+    "fileExtension": null,
+    "shareType": "REGISTERED",
+    "scannedShareCertificate": null
+  },
+  {
+    "numberOfShares": 100,
+    "percentageOwnership": 10.00,
+    "sharePrice": 1000.00,
+    "companyId": 1,
+    "id": null,
+    "personId": 1,
+    "fileExtension": null,
+    "shareType": "REGISTERED",
+    "scannedShareCertificate": null
+  },
+  {
+    "numberOfShares": 250,
+    "percentageOwnership": 2.52,
+    "sharePrice": 13000.00,
+    "companyId": 1,
+    "id": null,
+    "personId": 2,
+    "fileExtension": null,
+    "shareType": "BEARER",
+    "scannedShareCertificate": null
+  },
+  {
+    "numberOfShares": 45,
+    "percentageOwnership": 6.78,
+    "sharePrice": 556784.00,
+    "companyId": 1,
+    "id": null,
+    "personId": 3,
+    "fileExtension": null,
+    "shareType": "BEARER",
+    "scannedShareCertificate": null
+  },
+  {
+    "numberOfShares": 312,
+    "percentageOwnership": 10.00,
+    "sharePrice": 7895214.00,
+    "companyId": 1,
+    "id": null,
+    "personId": 5,
+    "fileExtension": null,
+    "shareType": "REGISTERED",
+    "scannedShareCertificate": null
+  },
+  {
+    "numberOfShares": 250,
+    "percentageOwnership": 2.52,
+    "sharePrice": 4567000.00,
+    "companyId": 1,
+    "id": null,
+    "personId": 2,
+    "fileExtension": null,
+    "shareType": "BEARER",
+    "scannedShareCertificate": null
+  },
+  {
+    "numberOfShares": 45,
+    "percentageOwnership": 6.78,
+    "sharePrice": 715000.00,
+    "companyId": 1,
+    "id": null,
+    "personId": 7,
+    "fileExtension": null,
+    "shareType": "REGISTERED",
+    "scannedShareCertificate": null
+  }
+]

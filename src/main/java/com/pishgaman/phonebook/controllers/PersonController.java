@@ -2,6 +2,8 @@ package com.pishgaman.phonebook.controllers;
 
 import com.pishgaman.phonebook.dtos.PersonDto;
 import com.pishgaman.phonebook.dtos.PersonSelectDto;
+import com.pishgaman.phonebook.exceptions.DatabaseIntegrityViolationException;
+import com.pishgaman.phonebook.exceptions.DuplicateNationalIdException;
 import com.pishgaman.phonebook.searchforms.PersonSearch;
 import com.pishgaman.phonebook.services.PersonService;
 import com.pishgaman.phonebook.utils.FileMediaType;
@@ -68,9 +70,13 @@ public class PersonController {
     }
 
     @PostMapping(path = {"/", ""})
-    public ResponseEntity<PersonDto> createPerson(@RequestBody PersonDto personDto) {
-        PersonDto createdPerson = personService.createPerson(personDto);
-        return new ResponseEntity<>(createdPerson, HttpStatus.CREATED);
+    public ResponseEntity<?> createPerson(@RequestBody PersonDto personDto) {
+        try {
+            PersonDto createdPerson = personService.createPerson(personDto);
+            return new ResponseEntity<>(createdPerson, HttpStatus.CREATED);
+        }catch (DuplicateNationalIdException e){
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
     }
     @PostMapping("/import")
     public ResponseEntity<String> importPersonsFromExcel(@RequestParam("file") MultipartFile file) {
@@ -114,9 +120,10 @@ public class PersonController {
         try {
             String message = personService.removePerson(personId);
             return ResponseEntity.status(HttpStatus.NO_CONTENT).body(message);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (DatabaseIntegrityViolationException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }catch (EntityNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 }

@@ -2,6 +2,7 @@ package com.pishgaman.phonebook.controllers;
 
 import com.pishgaman.phonebook.dtos.CustomerDto;
 import com.pishgaman.phonebook.dtos.CustomerSelect;
+import com.pishgaman.phonebook.exceptions.EntityAlreadyExistsException;
 import com.pishgaman.phonebook.searchforms.CustomerSearch;
 import com.pishgaman.phonebook.services.CustomerService;
 import com.pishgaman.phonebook.utils.FileMediaType;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 
 @CrossOrigin
@@ -100,17 +102,34 @@ public class CustomerController {
     }
 
     @PostMapping(path = {"/",""})
-    public ResponseEntity<CustomerDto> createCustomer(@RequestBody CustomerDto customerDto) {
-        CustomerDto createdCustomer = customerService.createCustomer(customerDto);
-        return new ResponseEntity<>(createdCustomer, HttpStatus.CREATED);
+    public ResponseEntity<?> createCustomer(@RequestBody CustomerDto customerDto) {
+        try {
+            CustomerDto createdCustomer = customerService.createCustomer(customerDto);
+            return new ResponseEntity<>(createdCustomer, HttpStatus.CREATED);
+        }catch (EntityAlreadyExistsException e){
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(null);
+        }catch (DateTimeParseException e){
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid date format. Please use the format YYYY-MM-DD");
+        }
     }
-
     @PutMapping(path = "/{customerId}")
-    public ResponseEntity<CustomerDto> updateCustomer(@PathVariable("customerId") Long customerId, @RequestBody CustomerDto customerDto) {
-        CustomerDto updatedCustomer = customerService.updateCustomer(customerId, customerDto);
-        return ResponseEntity.status(HttpStatus.OK).body(updatedCustomer);
+    public ResponseEntity<?> updateCustomer(@PathVariable("customerId") Long customerId, @RequestBody CustomerDto customerDto) {
+        try {
+            CustomerDto updatedCustomer = customerService.updateCustomer(customerId, customerDto);
+            return ResponseEntity.status(HttpStatus.OK).body(updatedCustomer);
+        }catch (EntityNotFoundException e){
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        }catch (DateTimeParseException e){
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid date format. Please use the format YYYY-MM-DD");
+        }catch (EntityAlreadyExistsException e){
+            System.out.println(e.getMessage());
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
     }
-
     @DeleteMapping("/{customerId}")
     public ResponseEntity<String> deleteCustomer(@PathVariable("customerId") Long customerId) {
         try {

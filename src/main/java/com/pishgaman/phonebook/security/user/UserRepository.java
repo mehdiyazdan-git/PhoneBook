@@ -15,6 +15,9 @@ public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecifi
   @Query("select u from User u where u.username = :username")
   Optional<User> findByUsername(@Param("username") String username);
 
+  @Query("select u from User u where u.username = :username and u.id <> :id")
+  User findUserByUsernameAndIdNot(@Param("username") String username, @Param("id") Integer id);
+
   @Query("SELECT CASE WHEN COUNT(u) > 0 THEN false ELSE true END FROM User u")
   boolean isTableEmpty();
 

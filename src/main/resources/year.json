@@ -1,18 +1,22 @@
 [
   {
     "id": 1,
-    "name": 1400
+    "name": 1400,
+    "startingLetterNumber": 1
   },
   {
     "id": 2,
-    "name": 1401
+    "name": 1401,
+    "startingLetterNumber": 1
   },
   {
     "id": 3,
-    "name": 1402
+    "name": 1402,
+    "startingLetterNumber": 1
   },
   {
     "id": 4,
-    "name": 1403
+    "name": 1403,
+    "startingLetterNumber": 1
   }
 ]

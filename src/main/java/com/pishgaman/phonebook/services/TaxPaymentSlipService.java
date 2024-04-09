@@ -31,7 +31,7 @@ import java.util.stream.Collectors;
 public class TaxPaymentSlipService {
     private final TaxPaymentSlipRepository taxPaymentSlipRepository;
     private final TaxPaymentSlipMapper taxPaymentSlipMapper;
-    private  TaxPaymentSlipDetailMapper taxPaymentSlipDetailMapper;
+    private final TaxPaymentSlipDetailMapper taxPaymentSlipDetailMapper;
 
     public String uploadFromExcelFile(MultipartFile file) throws IOException {
         List<TaxPaymentSlipDto> taxPaymentSlipDtos = ExcelDataImporter.importData(file, TaxPaymentSlipDto.class);

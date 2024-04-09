@@ -6,6 +6,7 @@ import com.pishgaman.phonebook.entities.BoardMember;
 import com.pishgaman.phonebook.entities.Company;
 import com.pishgaman.phonebook.entities.Person;
 import com.pishgaman.phonebook.entities.Position;
+import com.pishgaman.phonebook.exceptions.BoardMemberAlreadyExistsException;
 import com.pishgaman.phonebook.mappers.BoardMemberDetailsMapper;
 import com.pishgaman.phonebook.mappers.BoardMemberMapper;
 import com.pishgaman.phonebook.repositories.BoardMemberRepository;
@@ -44,7 +45,7 @@ public class BoardMemberService {
             return boardMemberRepository.findAll(specification, pageRequest)
                     .map(boardMemberDetailsMapper::toDto);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("BoardMemberService Exception: " + e.getMessage());
             throw e;
         }
     }
@@ -65,11 +66,11 @@ public class BoardMemberService {
         try {
             BoardMember existingBoardMemberWithPerson = boardMemberRepository.findByPersonIdAndCompanyIdAndPositionId(boardMemberDto.getPersonId(), boardMemberDto.getCompanyId(), boardMemberDto.getPositionId());
             if (existingBoardMemberWithPerson != null) {
-                throw new IllegalStateException("این شخص قبلا در این شرکت و در این سمت حضور دارد.");
+                throw new BoardMemberAlreadyExistsException("این شخص قبلا در این شرکت و در این سمت حضور دارد.");
             }
             BoardMember existingBoardMember = boardMemberRepository.findByCompanyIdAndPositionId(boardMemberDto.getCompanyId(), boardMemberDto.getPositionId());
             if (existingBoardMember != null) {
-                throw new IllegalStateException("این سمت در شرکت انتخاب شده قبلا اشغال شده است.");
+                throw new BoardMemberAlreadyExistsException("این سمت در شرکت انتخاب شده قبلا اشغال شده است.");
             }
 
             BoardMember entity = new BoardMember();
@@ -79,21 +80,19 @@ public class BoardMemberService {
             BoardMember saved = boardMemberRepository.save(entity);
             return boardMemberMapper.toDto(saved);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("BoardMemberService Exception: " + e.getMessage());
             throw e;
         }
     }
-
-
     public BoardMemberDto updateBoardMember(Long boardMemberId, BoardMemberDto boardMemberDto) {
         try {
             BoardMember existingBoardMemberWithPerson = boardMemberRepository.findByPersonIdAndCompanyIdAndPositionIdAndNotBoardMemberId(boardMemberDto.getPersonId(), boardMemberDto.getCompanyId(), boardMemberDto.getPositionId(), boardMemberId);
             if (existingBoardMemberWithPerson != null) {
-                throw new IllegalStateException("این شخص قبلا در این شرکت و در این سمت حضور دارد.");
+                throw new BoardMemberAlreadyExistsException("این شخص قبلا در این شرکت و در این سمت حضور دارد.");
             }
             BoardMember existingBoardMember = boardMemberRepository.findByCompanyIdAndPositionIdAndNotBoardMemberId(boardMemberDto.getCompanyId(), boardMemberDto.getPositionId(), boardMemberId);
             if (existingBoardMember != null) {
-                throw new IllegalStateException("این سمت در شرکت انتخاب شده قبلا اشغال شده است.");
+                throw new BoardMemberAlreadyExistsException("این سمت در شرکت انتخاب شده قبلا اشغال شده است.");
             }
 
             Optional<BoardMember> optionalBoardMember = boardMemberRepository.findById(boardMemberId);
@@ -108,7 +107,7 @@ public class BoardMemberService {
             BoardMember updated = boardMemberRepository.save(boardMember);
             return boardMemberMapper.toDto(updated);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("BoardMemberService Exception: " + e.getMessage());
             throw e;
         }
     }
@@ -120,7 +119,7 @@ public class BoardMemberService {
             }
             boardMemberRepository.deleteById(boardMemberId);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.out.println("BoardMemberService Exception: " + e.getMessage());
             throw e;
         }
     }

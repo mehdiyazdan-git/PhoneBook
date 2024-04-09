@@ -1,8 +1,10 @@
 package com.pishgaman.phonebook.controllers;
 
 import com.pishgaman.phonebook.dtos.YearDto;
+import com.pishgaman.phonebook.exceptions.EntityAlreadyExistsException;
 import com.pishgaman.phonebook.searchforms.YearSearch;
 import com.pishgaman.phonebook.services.YearService;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -47,8 +49,6 @@ public class YearController {
         return ResponseEntity.ok(years);
     }
 
-
-
     @GetMapping("/{id}")
     public ResponseEntity<YearDto> getYearById(@PathVariable Long id) {
         YearDto year = yearService.findById(id);
@@ -56,27 +56,36 @@ public class YearController {
     }
 
     @PostMapping(path = {"/", ""})
-    public ResponseEntity<YearDto> createYear(@RequestBody YearDto yearDto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(yearService.createYear(yearDto));
+    public ResponseEntity<?> createYear(@RequestBody YearDto yearDto) {
+        try {
+            YearDto newYear = yearService.createYear(yearDto);
+            return ResponseEntity.status(HttpStatus.CREATED).body(newYear);
+        } catch (EntityAlreadyExistsException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }catch (EntityNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<YearDto> updateYear(@PathVariable Long id, @RequestBody YearDto yearDto) {
+    public ResponseEntity<?> updateYear(@PathVariable Long id, @RequestBody YearDto yearDto) {
         try {
             YearDto updatedYear = yearService.updateYear(id, yearDto);
             return ResponseEntity.ok(updatedYear);
-        } catch (DataIntegrityViolationException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage(), e);
+        } catch (EntityAlreadyExistsException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }catch (EntityNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteYear(@PathVariable Long id) {
+    public ResponseEntity<?> deleteYear(@PathVariable Long id) {
         try {
             yearService.deleteYear(id);
             return ResponseEntity.noContent().build();
         } catch (DataIntegrityViolationException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         }
     }
 }

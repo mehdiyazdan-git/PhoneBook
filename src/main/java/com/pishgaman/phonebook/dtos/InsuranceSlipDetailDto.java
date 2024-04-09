@@ -21,7 +21,7 @@ public class InsuranceSlipDetailDto implements Serializable {
     private Long id;
     private LocalDate issueDate;
     private String slipNumber;
-    private InsuranceSlip.SlipType type;
+    private String type;
     private BigDecimal amount;
     private LocalDate startDate;
     private LocalDate endDate;

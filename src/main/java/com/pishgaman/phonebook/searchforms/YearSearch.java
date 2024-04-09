@@ -10,4 +10,5 @@ import lombok.NoArgsConstructor;
 @Data
 public class YearSearch {
     private Long name;
+    private Long startingLetterNumber;
 }

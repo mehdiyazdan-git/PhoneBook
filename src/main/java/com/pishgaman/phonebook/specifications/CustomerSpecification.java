@@ -29,8 +29,13 @@ public class CustomerSpecification {
                 predicate = cb.and(predicate, cb.like(root.get("registerCode"), "%" + search.getRegisterCode() + "%"));
             }
             if (search.getRegisterDate() != null && !search.getRegisterDate().isEmpty()) {
-                LocalDate registerDate = LocalDate.parse(search.getRegisterDate(), DateTimeFormatter.ISO_LOCAL_DATE);
-                predicate = cb.and(predicate, cb.equal(root.get("registerDate"), registerDate));
+                String trimmed = search.getRegisterDate().trim();
+                String[] dateParts = trimmed.split("-");
+                int year = Integer.parseInt(dateParts[0]);
+                int month = Integer.parseInt(dateParts[1]);
+                int day = Integer.parseInt(dateParts[2]);
+                LocalDate date = LocalDate.of(year, month, day);
+                predicate = cb.and(predicate, cb.equal(root.get("registerDate"), date));
             }
             return predicate;
         };

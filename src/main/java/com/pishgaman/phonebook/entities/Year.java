@@ -22,4 +22,6 @@ public class Year {
     @OneToMany(mappedBy = "year", orphanRemoval = true)
     private Set<Letter> letters = new LinkedHashSet<>();
 
+    @Column(name = "starting_letter_number")
+    private Long startingLetterNumber;
 }
