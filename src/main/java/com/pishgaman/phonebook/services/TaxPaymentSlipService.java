@@ -88,13 +88,29 @@ public class TaxPaymentSlipService {
         return taxPaymentSlipRepository.existsById(id);
     }
 
-    public void saveTaxPaymentSlipFile(Long taxPaymentSlipId, MultipartFile file) throws IOException {
+    public void saveTaxPaymentSlipFile(
+            Long taxPaymentSlipId,
+            MultipartFile file,
+            String fileName,
+            String fileExtension
+    ) throws IOException {
         TaxPaymentSlip taxPaymentSlip = taxPaymentSlipRepository.findById(taxPaymentSlipId)
                 .orElseThrow(() -> new EntityNotFoundException("Tax payment slip not found with id: " + taxPaymentSlipId));
 
         byte[] fileBytes = file.getBytes();
         taxPaymentSlip.setFile(Arrays.copyOf(fileBytes, fileBytes.length));
-        taxPaymentSlip.setFileExtension(Objects.requireNonNull(file.getOriginalFilename()).substring(file.getOriginalFilename().lastIndexOf(".") + 1));
+        taxPaymentSlip.setFileExtension(fileExtension);
+        taxPaymentSlip.setFileName(fileName);
         taxPaymentSlipRepository.save(taxPaymentSlip);
+    }
+
+    public String deleteTaxPaymentSlipFile(Long taxPaymentSlipId) {
+        TaxPaymentSlip taxPaymentSlip = taxPaymentSlipRepository.findById(taxPaymentSlipId)
+                .orElseThrow(() -> new EntityNotFoundException("فیش مالیات با شناسه " + taxPaymentSlipId + " یافت نشد."));
+        taxPaymentSlip.setFile(null);
+        taxPaymentSlip.setFileName(null);
+        taxPaymentSlip.setFileExtension(null);
+        taxPaymentSlipRepository.save(taxPaymentSlip);
+        return "فایل فیش مالیات با شناسه " + taxPaymentSlipId + " با موفقیت حذف شد.";
     }
 }

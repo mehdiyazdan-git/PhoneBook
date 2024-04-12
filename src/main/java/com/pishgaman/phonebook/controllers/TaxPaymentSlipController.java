@@ -83,12 +83,14 @@ public class TaxPaymentSlipController {
     @PostMapping("/{taxPaymentSlipId}/upload-file")
     public ResponseEntity<String> uploadTaxPaymentSlipFile(
             @PathVariable("taxPaymentSlipId") Long taxPaymentSlipId,
-            @RequestParam("file") MultipartFile file) {
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("fileExtension") String fileExtension,
+            @RequestParam("fileName") String fileName
+    ) {
         try {
-            taxPaymentSlipService.saveTaxPaymentSlipFile(taxPaymentSlipId, file);
-            return ResponseEntity.ok("File uploaded successfully.");
+            taxPaymentSlipService.saveTaxPaymentSlipFile(taxPaymentSlipId, file,fileName,fileExtension);
+            return ResponseEntity.status(HttpStatus.CREATED).body("File uploaded successfully");
         } catch (IOException e) {
-            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to upload file: " + e.getMessage());
         } catch (EntityNotFoundException e) {
@@ -136,15 +138,32 @@ public class TaxPaymentSlipController {
     }
 
     @PutMapping("/{taxPaymentSlipId}")
-    public ResponseEntity<TaxPaymentSlipDto> updateTaxPaymentSlip(@PathVariable("taxPaymentSlipId") Long taxPaymentSlipId, @RequestBody TaxPaymentSlipDto taxPaymentSlipDto) {
-        TaxPaymentSlipDto updatedTaxPaymentSlip = taxPaymentSlipService.updateTaxPaymentSlip(taxPaymentSlipId, taxPaymentSlipDto);
+    public ResponseEntity<TaxPaymentSlipDto> updateTaxPaymentSlip(
+            @PathVariable("taxPaymentSlipId") Long taxPaymentSlipId,
+            @RequestBody TaxPaymentSlipDto taxPaymentSlipDto) {
+        TaxPaymentSlipDto updatedTaxPaymentSlip =
+                taxPaymentSlipService.updateTaxPaymentSlip(taxPaymentSlipId, taxPaymentSlipDto);
         return ResponseEntity.status(HttpStatus.OK).body(updatedTaxPaymentSlip);
     }
 
     @DeleteMapping("/{taxPaymentSlipId}")
-    public ResponseEntity<String> deleteTaxPaymentSlip(@PathVariable("taxPaymentSlipId") Long taxPaymentSlipId) {
+    public ResponseEntity<String> deleteTaxPaymentSlip(
+            @PathVariable("taxPaymentSlipId") Long taxPaymentSlipId
+    ) {
         try {
             String message = taxPaymentSlipService.removeTaxPaymentSlip(taxPaymentSlipId);
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(message);
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+    @DeleteMapping("/{taxPaymentSlipId}/delete-file")
+    public ResponseEntity<String> deleteTaxPaymentSlipFile(
+            @PathVariable("taxPaymentSlipId") Long taxPaymentSlipId
+    ) {
+        try {
+            String message = taxPaymentSlipService.deleteTaxPaymentSlipFile(taxPaymentSlipId);
             return ResponseEntity.status(HttpStatus.NO_CONTENT).body(message);
         } catch (IllegalArgumentException e) {
             e.printStackTrace();

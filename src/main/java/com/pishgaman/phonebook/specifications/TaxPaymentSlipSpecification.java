@@ -31,7 +31,7 @@ public class TaxPaymentSlipSpecification {
 
 
             if (searchForm.getCompanyName() != null) {
-                Predicate companyNamePredicate = criteriaBuilder.like(root.get("company").get("name"), "%" + searchForm.getCompanyName() + "%");
+                Predicate companyNamePredicate = criteriaBuilder.like(root.get("company").get("companyName"), "%" + searchForm.getCompanyName() + "%");
                 predicates.add(companyNamePredicate);
             }
 
