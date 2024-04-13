@@ -5,13 +5,15 @@ import com.pishgaman.phonebook.dtos.LetterDto;
 import com.pishgaman.phonebook.enums.LetterState;
 import com.pishgaman.phonebook.searchforms.LetterSearch;
 import com.pishgaman.phonebook.services.LetterService;
+import com.pishgaman.phonebook.utils.FileMediaType;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,17 +50,47 @@ public class LetterController {
         Page<LetterDetailsDto> letters = letterService.findAllLetterDetails(search, page, size, sortBy, order);
         return ResponseEntity.ok(letters);
     }
+    @GetMapping("/download-all-letters.xlsx")
+    public ResponseEntity<byte[]> downloadAllLettersExcel() throws IOException {
+        byte[] excelData = letterService.exportLettersToExcel();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDisposition(ContentDisposition.attachment()
+                .filename("all_letters.xlsx")
+                .build());
+        return ResponseEntity.ok().headers(headers).body(excelData);
+    }
 
-//    @GetMapping(path = "/all-by-sender-id/{senderId}")
-//    public ResponseEntity<List<LetterDetailsDto>> findLetterDetailsBySenderId(@PathVariable("senderId") Long senderId) {
-//        List<LetterDetailsDto> letters = letterService.findLetterDetailsBySenderId(senderId);
-//        return ResponseEntity.ok(letters);
-//    }
-//    @GetMapping("/details")
-//    public ResponseEntity<List<LetterDetailsDto>> getLetterDetails() {
-//        List<LetterDetailsDto> letterDetails = letterService.getLetterDetails();
-//        return ResponseEntity.ok(letterDetails);
-//    }
+    @PostMapping("/import-letters")
+    public ResponseEntity<String> importLettersFromExcel(@RequestParam("file") MultipartFile file) {
+        try {
+            String message = letterService.importLettersFromExcel(file);
+            return ResponseEntity.ok(message);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to import letters from Excel file: " + e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Error processing Excel file: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/template")
+    public ResponseEntity<byte[]> downloadLetterTemplate() {
+        try {
+            byte[] templateBytes = letterService.generateLetterTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentDispositionFormData("attachment", "letter_template.xlsx");
+            headers.setContentType(FileMediaType.getMediaType("xlsx"));
+
+            return new ResponseEntity<>(templateBytes, headers, HttpStatus.OK);
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().body(null);
+        }
+    }
 
     @GetMapping(path = "/{letterId}")
     public ResponseEntity<LetterDto> getLetterById(@PathVariable Long letterId) {

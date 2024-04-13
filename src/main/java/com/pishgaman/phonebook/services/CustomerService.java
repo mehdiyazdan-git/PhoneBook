@@ -2,6 +2,7 @@ package com.pishgaman.phonebook.services;
 
 import com.pishgaman.phonebook.dtos.CustomerDto;
 import com.pishgaman.phonebook.dtos.CustomerSelect;
+import com.pishgaman.phonebook.dtos.DocumentDto;
 import com.pishgaman.phonebook.entities.Customer;
 import com.pishgaman.phonebook.exceptions.EntityAlreadyExistsException;
 import com.pishgaman.phonebook.mappers.CustomerMapper;
@@ -9,6 +10,8 @@ import com.pishgaman.phonebook.repositories.CustomerRepository;
 import com.pishgaman.phonebook.repositories.LetterRepository;
 import com.pishgaman.phonebook.searchforms.CustomerSearch;
 import com.pishgaman.phonebook.specifications.CustomerSpecification;
+import com.pishgaman.phonebook.utils.ExcelDataExporter;
+import com.pishgaman.phonebook.utils.ExcelDataImporter;
 import com.pishgaman.phonebook.utils.ExcelRowParser;
 import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
 import jakarta.persistence.EntityNotFoundException;
@@ -38,7 +41,7 @@ public class CustomerService {
     private final CustomerRepository customerRepository;
     private final CustomerMapper customerMapper;
 
-    public String importCustomersFromExcel(MultipartFile file) throws IOException {
+    public String importCustomersFromExcel1(MultipartFile file) throws IOException {
         if (file.isEmpty()) {
             throw new RuntimeException("The provided file is empty.");
         }
@@ -151,6 +154,19 @@ public class CustomerService {
 
         return style;
     }
+    public String importCustomersFromExcel(MultipartFile file) throws IOException {
+        List<CustomerDto> customerDtos = ExcelDataImporter.importData(file, CustomerDto.class);
+        List<Customer> customers = customerDtos.stream().map(customerMapper::toEntity).collect(Collectors.toList());
+        customerRepository.saveAll(customers);
+        return customers.size() + " customers have been imported successfully.";
+    }
+
+    public byte[] exportCustomersToExcel() throws IOException {
+        List<CustomerDto> customerDtos = customerRepository.findAll().stream().map(customerMapper::toDto)
+                .collect(Collectors.toList());
+        return ExcelDataExporter.exportData(customerDtos, CustomerDto.class);
+    }
+
 
     public Page<CustomerDto> findAll(CustomerSearch search, int page, int size, String sortBy, String order) {
         Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);

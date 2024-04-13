@@ -61,7 +61,7 @@ public class ExcelRowParser {
 
     private static LocalDate convertCellToDate(Cell cell) {
         DateConverter dateConverter = new DateConverter();
-        String[] parts = cell.getStringCellValue().split("/");
+        String[] parts = cell.getStringCellValue().split("-");
         int jalaliYear = Integer.parseInt(parts[0]);
         int jalaliMonth = Integer.parseInt(parts[1]);
         int jalaliDay = Integer.parseInt(parts[2]);

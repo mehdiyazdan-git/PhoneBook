@@ -29,16 +29,7 @@ public class PersonController {
         this.personService = personService;
     }
 
-    @GetMapping("/download-all-persons.xlsx")
-    public ResponseEntity<byte[]> downloadAllPersonsExcel() throws IOException {
-        byte[] excelData = personService.exportPersonsToExcel();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        headers.setContentDisposition(ContentDisposition.attachment()
-                .filename("all_persons.xlsx")
-                .build());
-        return ResponseEntity.ok().headers(headers).body(excelData);
-    }
+
 
     @GetMapping(path = {"/", ""})
     public ResponseEntity<Page<PersonDto>> getAllPersons(
@@ -78,6 +69,18 @@ public class PersonController {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
         }
     }
+
+    @GetMapping("/download-all-persons.xlsx")
+    public ResponseEntity<byte[]> downloadAllPersonsExcel() throws IOException {
+        byte[] excelData = personService.exportPersonsToExcel();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDisposition(ContentDisposition.attachment()
+                .filename("all_persons.xlsx")
+                .build());
+        return ResponseEntity.ok().headers(headers).body(excelData);
+    }
+
     @PostMapping("/import")
     public ResponseEntity<String> importPersonsFromExcel(@RequestParam("file") MultipartFile file) {
         try {

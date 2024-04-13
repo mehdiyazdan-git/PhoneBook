@@ -54,7 +54,7 @@ public class DatabaseInitializer {
             String personJsonData = new String(Files.readAllBytes(Paths.get(personResource.getURI())));
             List<Person> persons = mapper.readValue(personJsonData, new TypeReference<>() {
             });
-            personRepository.saveAll(persons);
+//            personRepository.saveAll(persons);
         }
 
         if (companyRepository.count() == 0) {

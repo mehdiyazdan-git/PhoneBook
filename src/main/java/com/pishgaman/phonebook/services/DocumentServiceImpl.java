@@ -9,9 +9,14 @@ import com.pishgaman.phonebook.repositories.CompanyRepository;
 import com.pishgaman.phonebook.repositories.DocumentRepository;
 import com.pishgaman.phonebook.repositories.LetterRepository;
 import com.pishgaman.phonebook.repositories.PersonRepository;
+import com.pishgaman.phonebook.utils.ExcelDataExporter;
+import com.pishgaman.phonebook.utils.ExcelDataImporter;
+import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -99,6 +104,24 @@ public class DocumentServiceImpl implements DocumentService {
         Optional<Document> documentOptional = documentRepository.findById(id);
         return documentOptional.map(documentMapper::toDto).orElseThrow(() -> new RuntimeException("Document not found with id: " + id));
     }
+    @Override
+    public byte[] generateDocumentTemplate() throws IOException {
+        return ExcelTemplateGenerator.generateTemplateExcel(DocumentDto.class);
+    }
+    @Override
+    public String importDocumentsFromExcel(MultipartFile file) throws IOException {
+        List<DocumentDto> documentDtos = ExcelDataImporter.importData(file, DocumentDto.class);
+        List<Document> documents = documentDtos.stream().map(documentMapper::toEntity).collect(Collectors.toList());
+        documentRepository.saveAll(documents);
+        return documents.size() + " documents have been imported successfully.";
+    }
+
+    public byte[] exportDocumentsToExcel() throws IOException {
+        List<DocumentDto> documentDtos = documentRepository.findAll().stream().map(documentMapper::toDto)
+                .collect(Collectors.toList());
+        return ExcelDataExporter.exportData(documentDtos, DocumentDto.class);
+    }
+
 
     @Override
     public DocumentDto updateDocument(Long id, DocumentDto documentDto) {

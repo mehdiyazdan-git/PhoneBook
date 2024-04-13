@@ -3,12 +3,11 @@ package com.pishgaman.phonebook.controllers;
 import com.pishgaman.phonebook.dtos.DocumentDetailDto;
 import com.pishgaman.phonebook.dtos.DocumentDto;
 import com.pishgaman.phonebook.services.DocumentService;
+import com.pishgaman.phonebook.utils.FileMediaType;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
@@ -76,6 +75,48 @@ public class DocumentController {
     public ResponseEntity<List<DocumentDetailDto>> findAllByLetterId(@PathVariable Long letterId) {
         List<DocumentDetailDto> documents = documentService.findAllByLetterId(letterId);
         return ResponseEntity.ok(documents);
+    }
+
+    @GetMapping("/download-all-documents.xlsx")
+    public ResponseEntity<byte[]> downloadAllDocumentsExcel() throws IOException {
+        byte[] excelData = documentService.generateDocumentTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDisposition(ContentDisposition.attachment()
+                .filename("all_documents.xlsx")
+                .build());
+        return ResponseEntity.ok().headers(headers).body(excelData);
+    }
+
+    @PostMapping("/import-documents")
+    public ResponseEntity<String> importDocumentsFromExcel(@RequestParam("file") MultipartFile file) {
+        try {
+            String message = documentService.importDocumentsFromExcel(file);
+            return ResponseEntity.ok(message);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to import documents from Excel file: " + e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Error processing Excel file: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/template")
+    public ResponseEntity<byte[]> downloadDocumentSlipTemplate() {
+        try {
+            byte[] templateBytes = documentService.generateDocumentTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentDispositionFormData("attachment", "document_template.xlsx");
+            headers.setContentType(FileMediaType.getMediaType("xlsx"));
+
+            return new ResponseEntity<>(templateBytes, headers, HttpStatus.OK);
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().body(null);
+        }
     }
 
 

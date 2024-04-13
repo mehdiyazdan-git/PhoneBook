@@ -2,6 +2,7 @@ package com.pishgaman.phonebook.services;
 
 import com.pishgaman.phonebook.dtos.BoardMemberDetailsDto;
 import com.pishgaman.phonebook.dtos.BoardMemberDto;
+import com.pishgaman.phonebook.dtos.CompanyDto;
 import com.pishgaman.phonebook.entities.BoardMember;
 import com.pishgaman.phonebook.entities.Company;
 import com.pishgaman.phonebook.entities.Person;
@@ -15,6 +16,9 @@ import com.pishgaman.phonebook.repositories.PersonRepository;
 import com.pishgaman.phonebook.repositories.PositionRepository;
 import com.pishgaman.phonebook.searchforms.BoardMemberSearch;
 import com.pishgaman.phonebook.specifications.BoardMemberSpecification;
+import com.pishgaman.phonebook.utils.ExcelDataExporter;
+import com.pishgaman.phonebook.utils.ExcelDataImporter;
+import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -23,9 +27,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -61,6 +69,22 @@ public class BoardMemberService {
             e.printStackTrace();
             throw e;
         }
+    }
+    public String importBoardMembersFromExcel(MultipartFile file) throws IOException {
+        List<BoardMemberDto> boardMemberDtos = ExcelDataImporter.importData(file, BoardMemberDto.class);
+        List<BoardMember> boardMembers = boardMemberDtos.stream().map(boardMemberMapper::toEntity).collect(Collectors.toList());
+        boardMemberRepository.saveAll(boardMembers);
+        return boardMembers.size() + " board members have been imported successfully.";
+    }
+
+    public byte[] exportBoardMembersToExcel() throws IOException {
+        List<BoardMemberDto> boardMemberDtos = boardMemberRepository.findAll().stream().map(boardMemberMapper::toDto)
+                .collect(Collectors.toList());
+        return ExcelDataExporter.exportData(boardMemberDtos, BoardMemberDto.class);
+    }
+
+    public byte[] generateBoardMemberTemplate() throws IOException {
+        return ExcelTemplateGenerator.generateTemplateExcel(BoardMemberDto.class);
     }
     public BoardMemberDto createBoardMember(BoardMemberDto boardMemberDto) {
         try {

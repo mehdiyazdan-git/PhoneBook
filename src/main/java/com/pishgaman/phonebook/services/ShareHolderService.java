@@ -1,6 +1,7 @@
 package com.pishgaman.phonebook.services;
 
 
+import com.pishgaman.phonebook.dtos.PersonDto;
 import com.pishgaman.phonebook.dtos.ShareholderDetailDto;
 import com.pishgaman.phonebook.dtos.ShareholderDto;
 import com.pishgaman.phonebook.entities.Shareholder;
@@ -11,6 +12,7 @@ import com.pishgaman.phonebook.searchforms.ShareholderSearchForm;
 import com.pishgaman.phonebook.specifications.ShareholderSpecification;
 import com.pishgaman.phonebook.utils.ExcelDataExporter;
 import com.pishgaman.phonebook.utils.ExcelDataImporter;
+import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -77,6 +79,22 @@ public class ShareHolderService {
         }
         return optionalShareHolder.get();
     }
+    public String importShareHoldersFromExcel(MultipartFile file) throws IOException {
+        List<ShareholderDto> shareHolderDtos = ExcelDataImporter.importData(file, ShareholderDto.class);
+        List<Shareholder> shareHolders = shareHolderDtos.stream().map(shareHolderMapper::toEntity).collect(Collectors.toList());
+        shareHolderRepository.saveAll(shareHolders);
+        return shareHolders.size() + " shareholders have been imported successfully.";
+    }
+
+    public byte[] exportShareHoldersToExcel() throws IOException {
+        List<ShareholderDto> shareHolderDtos = shareHolderRepository.findAll().stream().map(shareHolderMapper::toDto)
+                .collect(Collectors.toList());
+        return ExcelDataExporter.exportData(shareHolderDtos, ShareholderDto.class);
+    }
+
+    public byte[] generateShareholderTemplate() throws IOException {
+        return ExcelTemplateGenerator.generateTemplateExcel(ShareholderDto.class);
+    }
 
     public ShareholderDto findById(Long ShareHolderId) {
         return shareHolderMapper.toDto(findShareHolderById(ShareHolderId));
@@ -105,14 +123,42 @@ public class ShareHolderService {
         return shareHolderRepository.existsById(id);
     }
 
-    public void saveShareHolderFile(Long shareholderId, MultipartFile file) throws IOException {
+    public void saveShareholderFile(
+            Long shareholderId,
+            MultipartFile file,
+            String fileName,
+            String fileExtension
+    ) throws IOException {
         Shareholder shareholder = shareHolderRepository.findById(shareholderId)
                 .orElseThrow(() -> new EntityNotFoundException("Shareholder not found with id: " + shareholderId));
 
         byte[] fileBytes = file.getBytes();
+
+        if (fileName == null || fileName.isEmpty()) {
+            // Extract file name from the original file
+            fileName = Objects.requireNonNull(file.getOriginalFilename());
+        }
+        if (fileExtension == null || fileExtension.isEmpty()) {
+            // Extract file extension from the original file
+            fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
+        }
+
         shareholder.setScannedShareCertificate(Arrays.copyOf(fileBytes, fileBytes.length));
-        shareholder.setFileExtension(Objects.requireNonNull(file.getOriginalFilename()).substring(file.getOriginalFilename().lastIndexOf(".") + 1));
+        shareholder.setFileName(fileName);
+        shareholder.setFileExtension(fileExtension);
         shareHolderRepository.save(shareholder);
     }
+
+    public String deleteShareholderFile(Long shareholderId) {
+        Shareholder shareholder = shareHolderRepository.findById(shareholderId)
+                .orElseThrow(() -> new EntityNotFoundException("Shareholder not found with id: " + shareholderId));
+        shareholder.setScannedShareCertificate(null);
+        shareholder.setFileName(null);
+        shareholder.setFileExtension(null);
+        shareHolderRepository.save(shareholder);
+
+        return "The file for the shareholder has been successfully deleted.";
+    }
+
 }
 

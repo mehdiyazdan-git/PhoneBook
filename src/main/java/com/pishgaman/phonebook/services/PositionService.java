@@ -1,11 +1,15 @@
 package com.pishgaman.phonebook.services;
 
+import com.pishgaman.phonebook.dtos.PersonDto;
 import com.pishgaman.phonebook.dtos.PositionDto;
 import com.pishgaman.phonebook.entities.Position;
 import com.pishgaman.phonebook.mappers.PositionMapper;
 import com.pishgaman.phonebook.repositories.PositionRepository;
 import com.pishgaman.phonebook.searchforms.PositionSearch;
 import com.pishgaman.phonebook.specifications.PositionSpecification;
+import com.pishgaman.phonebook.utils.ExcelDataExporter;
+import com.pishgaman.phonebook.utils.ExcelDataImporter;
+import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -13,7 +17,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -37,6 +43,23 @@ public class PositionService {
     }
     public List<PositionDto> searchPositionByNameContaining(String searchQuery) {
         return positionRepository.findAllByNameContaining(searchQuery).stream().map(positionMapper::toDto).collect(Collectors.toList());
+    }
+
+    public String importPositionsFromExcel(MultipartFile file) throws IOException {
+        List<PositionDto> positionDtos = ExcelDataImporter.importData(file, PositionDto.class);
+        List<Position> positions = positionDtos.stream().map(positionMapper::toEntity).collect(Collectors.toList());
+        positionRepository.saveAll(positions);
+        return positions.size() + " positions have been imported successfully.";
+    }
+
+    public byte[] exportPositionsToExcel() throws IOException {
+        List<PositionDto> positionDtos = positionRepository.findAll().stream().map(positionMapper::toDto)
+                .collect(Collectors.toList());
+        return ExcelDataExporter.exportData(positionDtos, PositionDto.class);
+    }
+
+    public byte[] generatePositionTemplate() throws IOException {
+        return ExcelTemplateGenerator.generateTemplateExcel(PositionDto.class);
     }
 
     public PositionDto findById(Long positionId) {

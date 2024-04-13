@@ -2,6 +2,7 @@ package com.pishgaman.phonebook.services;
 
 import com.pishgaman.phonebook.dtos.InsuranceSlipDetailDto;
 import com.pishgaman.phonebook.dtos.InsuranceSlipDto;
+import com.pishgaman.phonebook.dtos.LetterDto;
 import com.pishgaman.phonebook.entities.InsuranceSlip;
 import com.pishgaman.phonebook.mappers.InsuranceSlipDetailMapper;
 import com.pishgaman.phonebook.mappers.InsuranceSlipMapper;
@@ -10,6 +11,7 @@ import com.pishgaman.phonebook.searchforms.InsuranceSlipSearchForm;
 import com.pishgaman.phonebook.specifications.InsuranceSlipSpecification;
 import com.pishgaman.phonebook.utils.ExcelDataExporter;
 import com.pishgaman.phonebook.utils.ExcelDataImporter;
+import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -43,6 +45,23 @@ public class InsuranceSlipService {
     public byte[] exportToExcelFile() throws IOException {
         List<InsuranceSlipDto> insuranceSlipDtoList = insuranceSlipRepository.findAll().stream().map(insuranceSlipMapper::toDto).collect(Collectors.toList());
         return ExcelDataExporter.exportData(insuranceSlipDtoList, InsuranceSlipDto.class);
+    }
+    public String importInsuranceSlipsFromExcel(MultipartFile file) throws IOException {
+        List<InsuranceSlipDto> insuranceSlipDtos = ExcelDataImporter.importData(file, InsuranceSlipDto.class);
+        List<InsuranceSlip> insuranceSlips = insuranceSlipDtos.stream().map(insuranceSlipMapper::toEntity).collect(Collectors.toList());
+        insuranceSlipRepository.saveAll(insuranceSlips);
+        return insuranceSlips.size() + " insurance slips have been imported successfully.";
+    }
+
+    public byte[] exportInsuranceSlipsToExcel() throws IOException {
+        List<InsuranceSlipDto> insuranceSlipDtos = insuranceSlipRepository.findAll().stream().map(insuranceSlipMapper::toDto)
+                .collect(Collectors.toList());
+        return ExcelDataExporter.exportData(insuranceSlipDtos, InsuranceSlipDto.class);
+    }
+
+
+    public byte[] generateInsuranceSlipTemplate() throws IOException {
+        return ExcelTemplateGenerator.generateTemplateExcel(InsuranceSlipDto.class);
     }
 
     public Page<InsuranceSlipDetailDto> findAll(InsuranceSlipSearchForm search, int page, int size, String sortBy, String order) {
@@ -89,13 +108,42 @@ public class InsuranceSlipService {
         return insuranceSlipRepository.existsById(id);
     }
 
-    public void saveInsuranceSlipFile(Long insuranceSlipId, MultipartFile file) throws IOException {
+    public void saveInsuranceSlipFile(
+            Long insuranceSlipId,
+            MultipartFile file,
+            String fileName,
+            String fileExtension
+    ) throws IOException {
         InsuranceSlip insuranceSlip = insuranceSlipRepository.findById(insuranceSlipId)
-                .orElseThrow(() -> new EntityNotFoundException("Insurance slip not found with id: " + insuranceSlipId));
+                .orElseThrow(() -> new EntityNotFoundException("فیش بیمه با این شناسه یافت نشد.: " + insuranceSlipId));
 
         byte[] fileBytes = file.getBytes();
+
+        if (fileName == null || fileName.isEmpty()) {
+            // extract file name from the original file
+            fileName = Objects.requireNonNull(file.getOriginalFilename());
+
+        }
+        if (fileExtension == null || fileExtension.isEmpty()){
+            // extract file extension from the original file
+            fileExtension = fileName.substring(fileName.lastIndexOf('.') + 1);
+
+        }
         insuranceSlip.setFile(Arrays.copyOf(fileBytes, fileBytes.length));
-        insuranceSlip.setFileExtension(Objects.requireNonNull(file.getOriginalFilename()).substring(file.getOriginalFilename().lastIndexOf(".") + 1));
+        insuranceSlip.setFileName(fileName);
+        insuranceSlip.setFileExtension(fileExtension);
         insuranceSlipRepository.save(insuranceSlip);
     }
+
+    public String deleteInsuranceSlipFile(Long insuranceSlipId) {
+        InsuranceSlip insuranceSlip = insuranceSlipRepository.findById(insuranceSlipId)
+                .orElseThrow(() -> new EntityNotFoundException("فیش بیمه با این شناسه یافت نشد.: " + insuranceSlipId));
+        insuranceSlip.setFile(null);
+        insuranceSlip.setFileName(null);
+        insuranceSlip.setFileExtension(null);
+        insuranceSlipRepository.save(insuranceSlip);
+
+        return "فایل فیش بیمه با موفقیت حذف شد.";
+    }
+
 }

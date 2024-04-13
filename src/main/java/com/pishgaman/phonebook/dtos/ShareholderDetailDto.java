@@ -28,4 +28,5 @@ public class ShareholderDetailDto implements Serializable {
     private Long companyId;
     private String companyCompanyName;
     private boolean hasFile;
+    private String fileName;
 }

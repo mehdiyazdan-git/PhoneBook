@@ -5,6 +5,7 @@ import com.github.eloyzone.jalalicalendar.JalaliDate;
 import com.github.eloyzone.jalalicalendar.JalaliDateFormatter;
 import com.pishgaman.phonebook.dtos.CompanyDto;
 import com.pishgaman.phonebook.dtos.CompanySelect;
+import com.pishgaman.phonebook.dtos.DocumentDto;
 import com.pishgaman.phonebook.entities.Company;
 import com.pishgaman.phonebook.exceptions.DatabaseIntegrityViolationException;
 import com.pishgaman.phonebook.exceptions.EntityAlreadyExistsException;
@@ -12,6 +13,9 @@ import com.pishgaman.phonebook.mappers.CompanyMapper;
 import com.pishgaman.phonebook.repositories.*;
 import com.pishgaman.phonebook.searchforms.CompanySearch;
 import com.pishgaman.phonebook.specifications.CompanySpecification;
+import com.pishgaman.phonebook.utils.ExcelDataExporter;
+import com.pishgaman.phonebook.utils.ExcelDataImporter;
+import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
@@ -208,6 +212,23 @@ public class CompanyService {
         }
         return companyDtoList;
 
+    }
+    public String importCompaniesFromExcel(MultipartFile file) throws IOException {
+        List<CompanyDto> companyDtos = ExcelDataImporter.importData(file, CompanyDto.class);
+        List<Company> companies = companyDtos.stream().map(companyMapper::toEntity).collect(Collectors.toList());
+        companyRepository.saveAll(companies);
+        return companies.size() + " companies have been imported successfully.";
+    }
+
+    public byte[] exportCompaniesToExcel() throws IOException {
+        List<CompanyDto> companyDtos = companyRepository.findAll().stream().map(companyMapper::toDto)
+                .collect(Collectors.toList());
+        return ExcelDataExporter.exportData(companyDtos, CompanyDto.class);
+    }
+
+
+    public byte[] generateCompanyTemplate() throws IOException {
+        return ExcelTemplateGenerator.generateTemplateExcel(CompanyDto.class);
     }
 
     public void saveCompanies(List<CompanyDto> companyDtoList) {

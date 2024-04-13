@@ -4,6 +4,7 @@ import com.pishgaman.phonebook.dtos.InsuranceSlipDetailDto;
 import com.pishgaman.phonebook.dtos.InsuranceSlipDto;
 import com.pishgaman.phonebook.searchforms.InsuranceSlipSearchForm;
 import com.pishgaman.phonebook.services.InsuranceSlipService;
+import com.pishgaman.phonebook.utils.FileMediaType;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
@@ -76,6 +77,32 @@ public class InsuranceSlipController {
         return new ResponseEntity<>(createdInsuranceSlip, HttpStatus.CREATED);
     }
 
+    @GetMapping("/download-all-insuranceslips.xlsx")
+    public ResponseEntity<byte[]> downloadAllInsuranceSlipsExcel() throws IOException {
+        byte[] excelData = insuranceSlipService.exportInsuranceSlipsToExcel();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDisposition(ContentDisposition.attachment()
+                .filename("all_insuranceslips.xlsx")
+                .build());
+        return ResponseEntity.ok().headers(headers).body(excelData);
+    }
+
+
+    @GetMapping("/template")
+    public ResponseEntity<byte[]> downloadInsuranceSlipTemplate() {
+        try {
+            byte[] templateBytes = insuranceSlipService.generateInsuranceSlipTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentDispositionFormData("attachment", "insurance_slip_template.xlsx");
+            headers.setContentType(FileMediaType.getMediaType("xlsx"));
+
+            return new ResponseEntity<>(templateBytes, headers, HttpStatus.OK);
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().body(null);
+        }
+    }
+
     @CrossOrigin(
             origins = "http://localhost:3000",
             methods = {RequestMethod.GET, RequestMethod.POST},
@@ -83,10 +110,13 @@ public class InsuranceSlipController {
     @PostMapping("/{insuranceSlipId}/upload-file")
     public ResponseEntity<String> uploadInsuranceSlipFile(
             @PathVariable("insuranceSlipId") Long insuranceSlipId,
-            @RequestParam("file") MultipartFile file) {
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("fileExtension") String fileExtension,
+            @RequestParam("fileName") String fileName
+    ) {
         try {
-            insuranceSlipService.saveInsuranceSlipFile(insuranceSlipId, file);
-            return ResponseEntity.ok("File uploaded successfully.");
+            insuranceSlipService.saveInsuranceSlipFile(insuranceSlipId, file, fileName, fileExtension);
+            return ResponseEntity.status(HttpStatus.CREATED).body("File uploaded successfully");
         } catch (IOException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -151,4 +181,17 @@ public class InsuranceSlipController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+    @DeleteMapping("/{insuranceSlipId}/delete-file")
+    public ResponseEntity<String> deleteInsuranceSlipFile(
+            @PathVariable("insuranceSlipId") Long insuranceSlipId
+    ) {
+        try {
+            String message = insuranceSlipService.deleteInsuranceSlipFile(insuranceSlipId);
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(message);
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
 }
