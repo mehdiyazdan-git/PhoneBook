@@ -1,5 +1,6 @@
 package com.pishgaman.phonebook.services;
 
+import com.pishgaman.phonebook.dtos.PersonDto;
 import com.pishgaman.phonebook.dtos.TaxPaymentSlipDetailDto;
 import com.pishgaman.phonebook.dtos.TaxPaymentSlipDto;
 import com.pishgaman.phonebook.entities.TaxPaymentSlip;
@@ -10,6 +11,7 @@ import com.pishgaman.phonebook.searchforms.TaxPaymentSlipSearchForm;
 import com.pishgaman.phonebook.specifications.TaxPaymentSlipSpecification;
 import com.pishgaman.phonebook.utils.ExcelDataExporter;
 import com.pishgaman.phonebook.utils.ExcelDataImporter;
+import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -22,7 +24,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -38,6 +39,22 @@ public class TaxPaymentSlipService {
         List<TaxPaymentSlip> taxPaymentSlips = taxPaymentSlipDtos.stream().map(taxPaymentSlipMapper::toEntity).collect(Collectors.toList());
         taxPaymentSlipRepository.saveAll(taxPaymentSlips);
         return taxPaymentSlips.size() + " tax payment slips successfully imported.";
+    }
+    public String importTaxPaymentSlipsFromExcel(MultipartFile file) throws IOException {
+        List<TaxPaymentSlipDto> taxPaymentSlipDtos = ExcelDataImporter.importData(file, TaxPaymentSlipDto.class);
+        List<TaxPaymentSlip> taxPaymentSlips = taxPaymentSlipDtos.stream().map(taxPaymentSlipMapper::toEntity).collect(Collectors.toList());
+        taxPaymentSlipRepository.saveAll(taxPaymentSlips);
+        return taxPaymentSlips.size() + " tax payment slips have been imported successfully.";
+    }
+
+    public byte[] exportTaxPaymentSlipsToExcel() throws IOException {
+        List<TaxPaymentSlipDto> taxPaymentSlipDtos = taxPaymentSlipRepository.findAll().stream().map(taxPaymentSlipMapper::toDto)
+                .collect(Collectors.toList());
+        return ExcelDataExporter.exportData(taxPaymentSlipDtos, TaxPaymentSlipDto.class);
+    }
+
+    public byte[] generateTaxPaymentSlipTemplate() throws IOException {
+        return ExcelTemplateGenerator.generateTemplateExcel(TaxPaymentSlipDto.class);
     }
 
     public byte[] exportToExcelFile() throws IOException {

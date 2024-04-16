@@ -4,14 +4,17 @@ import com.pishgaman.phonebook.dtos.CompanySelect;
 import com.pishgaman.phonebook.dtos.PositionDto;
 import com.pishgaman.phonebook.searchforms.PositionSearch;
 import com.pishgaman.phonebook.services.PositionService;
+import com.pishgaman.phonebook.utils.FileMediaType;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.io.IOException;
 import java.util.List;
 
 @CrossOrigin
@@ -41,6 +44,47 @@ public class PositionController {
     public ResponseEntity<List<PositionDto>> searchCompanyByNameContaining(@RequestParam(required = false) String searchQuery) {
         List<PositionDto> dtoList = positionService.searchPositionByNameContaining(searchQuery);
         return ResponseEntity.ok(dtoList);
+    }
+    @GetMapping("/download-all-positions.xlsx")
+    public ResponseEntity<byte[]> downloadAllPositionsExcel() throws IOException {
+        byte[] excelData = positionService.exportPositionsToExcel();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDisposition(ContentDisposition.attachment()
+                .filename("all_positions.xlsx")
+                .build());
+        return ResponseEntity.ok().headers(headers).body(excelData);
+    }
+
+    @PostMapping("/import-positions")
+    public ResponseEntity<String> importPositionsFromExcel(@RequestParam("file") MultipartFile file) {
+        try {
+            String message = positionService.importPositionsFromExcel(file);
+            return ResponseEntity.ok(message);
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Failed to import positions from Excel file: " + e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Error processing Excel file: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/template")
+    public ResponseEntity<byte[]> downloadPositionTemplate() {
+        try {
+            byte[] templateBytes = positionService.generatePositionTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentDispositionFormData("attachment", "position_template.xlsx");
+            headers.setContentType(FileMediaType.getMediaType("xlsx"));
+
+            return new ResponseEntity<>(templateBytes, headers, HttpStatus.OK);
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().body(null);
+        }
     }
 
     @GetMapping("/{id}")

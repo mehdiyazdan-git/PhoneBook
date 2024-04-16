@@ -26,7 +26,6 @@ public class TaxPaymentSlipDetailDto implements Serializable {
     private String period;
     private Long companyId;
     private String companyCompanyName;
-    private String file;
     private String fileExtension; // پسوند فایل فیش
     private String fileName;
 }

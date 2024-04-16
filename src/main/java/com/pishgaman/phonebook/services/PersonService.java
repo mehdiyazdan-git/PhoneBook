@@ -72,15 +72,14 @@ public class PersonService {
         personRepository.saveAll(persons);
         return persons.size() + " persons have been imported successfully.";
     }
-    public byte[] generatePersonTemplate() throws IOException {
-        return ExcelTemplateGenerator.generateTemplateExcel(PersonDto.class);
-    }
-
     public byte[] exportPersonsToExcel() throws IOException {
         List<PersonDto> personDtos = personRepository.findAll().stream().map(personMapper::toDto)
                 .collect(Collectors.toList());
-
         return ExcelDataExporter.exportData(personDtos, PersonDto.class);
+    }
+
+    public byte[] generatePersonTemplate() throws IOException {
+        return ExcelTemplateGenerator.generateTemplateExcel(PersonDto.class);
     }
     protected String convertDateToJalali(LocalDate localDate) {
         if (localDate == null) {

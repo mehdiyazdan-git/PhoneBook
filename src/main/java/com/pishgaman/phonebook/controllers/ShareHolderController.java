@@ -4,6 +4,7 @@ import com.pishgaman.phonebook.dtos.ShareholderDetailDto;
 import com.pishgaman.phonebook.dtos.ShareholderDto;
 import com.pishgaman.phonebook.searchforms.ShareholderSearchForm;
 import com.pishgaman.phonebook.services.ShareHolderService;
+import com.pishgaman.phonebook.utils.FileMediaType;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
@@ -51,6 +52,18 @@ public class ShareHolderController {
         return ResponseEntity.ok().headers(headers).body(excelData);
     }
 
+    @GetMapping("/download-all-shareholders.xlsx")
+    public ResponseEntity<byte[]> downloadAllShareHoldersExcel() throws IOException {
+        byte[] excelData = shareHolderService.exportShareHoldersToExcel();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDisposition(ContentDisposition.attachment()
+                .filename("all_shareholders.xlsx")
+                .build());
+        return ResponseEntity.ok().headers(headers).body(excelData);
+    }
+
+
     @GetMapping
     public ResponseEntity<Page<ShareholderDetailDto>> getAllShareHolders(
             ShareholderSearchForm search,
@@ -82,10 +95,13 @@ public class ShareHolderController {
     @PostMapping("/{shareHolderId}/upload-file")
     public ResponseEntity<String> uploadShareHolderFile(
             @PathVariable("shareHolderId") Long shareHolderId,
-            @RequestParam("file") MultipartFile file) {
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("fileExtension") String fileExtension,
+            @RequestParam("fileName") String fileName
+    ) {
         try {
-            shareHolderService.saveShareHolderFile(shareHolderId, file);
-            return ResponseEntity.ok("File uploaded successfully.");
+            shareHolderService.saveShareholderFile(shareHolderId, file, fileName, fileExtension);
+            return ResponseEntity.status(HttpStatus.CREATED).body("File uploaded successfully");
         } catch (IOException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -132,6 +148,19 @@ public class ShareHolderController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
                 .body(resource);
     }
+    @GetMapping("/template")
+    public ResponseEntity<byte[]> downloadShareholderTemplate() {
+        try {
+            byte[] templateBytes = shareHolderService.generateShareholderTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentDispositionFormData("attachment", "shareholders_template.xlsx");
+            headers.setContentType(FileMediaType.getMediaType("xlsx"));
+
+            return new ResponseEntity<>(templateBytes, headers, HttpStatus.OK);
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().body(null);
+        }
+    }
 
 
     @PutMapping("/{shareHolderId}")
@@ -150,4 +179,17 @@ public class ShareHolderController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         }
     }
+    @DeleteMapping("/{shareholderId}/delete-file")
+    public ResponseEntity<String> deleteShareholderFile(
+            @PathVariable("shareholderId") Long shareholderId
+    ) {
+        try {
+            String message = shareHolderService.deleteShareholderFile(shareholderId);
+            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(message);
+        } catch (IllegalArgumentException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
 }

@@ -49,23 +49,39 @@ public class AuthenticationService {
                 .build();
     }
 
+    /**
+     * Authenticates a user based on username and password provided in the request.
+     * @param request The authentication request containing username and password.
+     * @return An authentication response containing the access token, refresh token, username, and user role.
+     */
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
+        // Authenticate the user with username and password
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getUsername(),
                         request.getPassword()
                 )
         );
+
+        // Retrieve user from the database by username, or throw exception if not found
         var user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow();
+
+        // Retrieve all valid tokens for the authenticated user
         var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
 
+        // Check if there are no valid tokens
         if (validUserTokens.isEmpty()) {
+            // Generate a new JWT token for the user
             var jwtToken = jwtService.generateToken(user);
 
+            // Revoke all previous tokens for security reasons
             revokeAllUserTokens(user);
+
+            // Save the new JWT token in the database
             saveUserToken(user, jwtToken);
 
+            // Build and return a new authentication response with the new tokens and user information
             return AuthenticationResponse.builder()
                     .accessToken(jwtToken)
                     .refreshToken(jwtService.generateRefreshToken(user))
@@ -73,6 +89,8 @@ public class AuthenticationService {
                     .role(user.getRole().name())
                     .build();
         }
+
+        // If valid tokens exist, return the oldest valid token and a new refresh token
         return AuthenticationResponse.builder()
                 .accessToken(validUserTokens.get(0).getToken())
                 .refreshToken(jwtService.generateRefreshToken(user))
@@ -80,6 +98,7 @@ public class AuthenticationService {
                 .role(user.getRole().name())
                 .build();
     }
+
 
     public AuthenticationResponse refreshToken(String refreshToken) {
         if (refreshToken == null || refreshToken.isEmpty()) {

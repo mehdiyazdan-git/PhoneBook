@@ -27,4 +27,5 @@ public class InsuranceSlipDetailDto implements Serializable {
     private LocalDate endDate;
     private Long companyId;
     private String companyCompanyName;
+    private String fileName;
 }

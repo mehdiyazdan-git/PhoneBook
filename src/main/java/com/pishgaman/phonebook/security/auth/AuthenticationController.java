@@ -23,10 +23,17 @@ public class AuthenticationController {
 
   @PostMapping("/authenticate")
   public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
-    logAction("authenticate");
-    AuthenticationResponse authenticationResponse = service.authenticate(request);
-    logAction("successful user authentication");
-    return ResponseEntity.status(HttpStatus.OK).body(authenticationResponse);
+   try {
+     logAction("authenticate");
+     AuthenticationResponse authenticationResponse = service.authenticate(request);
+     logAction("successful user authentication");
+     return ResponseEntity.status(HttpStatus.OK).body(authenticationResponse);
+    } catch (Exception e) {
+     e.printStackTrace();
+      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+    }
+
+
   }
 
   @PostMapping("/refresh-token")

@@ -4,6 +4,7 @@ import com.pishgaman.phonebook.dtos.TaxPaymentSlipDetailDto;
 import com.pishgaman.phonebook.dtos.TaxPaymentSlipDto;
 import com.pishgaman.phonebook.searchforms.TaxPaymentSlipSearchForm;
 import com.pishgaman.phonebook.services.TaxPaymentSlipService;
+import com.pishgaman.phonebook.utils.FileMediaType;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ByteArrayResource;
@@ -50,6 +51,20 @@ public class TaxPaymentSlipController {
                 .build());
         return ResponseEntity.ok().headers(headers).body(excelData);
     }
+    @GetMapping("/template")
+    public ResponseEntity<byte[]> downloadTaxPaymentSlipTemplate() {
+        try {
+            byte[] templateBytes = taxPaymentSlipService.generateTaxPaymentSlipTemplate();
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentDispositionFormData("attachment", "tax_payment_slip_template.xlsx");
+            headers.setContentType(FileMediaType.getMediaType("xlsx"));
+
+            return new ResponseEntity<>(templateBytes, headers, HttpStatus.OK);
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().body(null);
+        }
+    }
+
 
     @GetMapping
     public ResponseEntity<Page<TaxPaymentSlipDetailDto>> getAllTaxPaymentSlips(
@@ -136,6 +151,18 @@ public class TaxPaymentSlipController {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
                 .body(resource);
     }
+
+    @GetMapping("/download-all-taxpaymentslips.xlsx")
+    public ResponseEntity<byte[]> downloadAllTaxPaymentSlipsExcel() throws IOException {
+        byte[] excelData = taxPaymentSlipService.exportTaxPaymentSlipsToExcel();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+        headers.setContentDisposition(ContentDisposition.attachment()
+                .filename("all_taxpaymentslips.xlsx")
+                .build());
+        return ResponseEntity.ok().headers(headers).body(excelData);
+    }
+
 
     @PutMapping("/{taxPaymentSlipId}")
     public ResponseEntity<TaxPaymentSlipDto> updateTaxPaymentSlip(
