@@ -2,11 +2,8 @@ package com.pishgaman.phonebook.services;
 
 import com.pishgaman.phonebook.dtos.LetterDetailsDto;
 import com.pishgaman.phonebook.dtos.LetterDto;
-import com.pishgaman.phonebook.dtos.PositionDto;
-import com.pishgaman.phonebook.dtos.TaxPaymentSlipDto;
 import com.pishgaman.phonebook.entities.Company;
 import com.pishgaman.phonebook.entities.Letter;
-import com.pishgaman.phonebook.entities.TaxPaymentSlip;
 import com.pishgaman.phonebook.entities.Year;
 import com.pishgaman.phonebook.enums.LetterState;
 import com.pishgaman.phonebook.mappers.LetterMapper;
@@ -15,17 +12,12 @@ import com.pishgaman.phonebook.repositories.LetterRepository;
 import com.pishgaman.phonebook.repositories.LetterSearchDao;
 import com.pishgaman.phonebook.repositories.YearRepository;
 import com.pishgaman.phonebook.searchforms.LetterSearch;
-import com.pishgaman.phonebook.utils.ExcelDataExporter;
-import com.pishgaman.phonebook.utils.ExcelDataImporter;
-import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -55,23 +47,13 @@ public class LetterService {
     ) {
         return letterSearchDao.findAllBySimpleQuery(search,page,size,sortBy,order);
     }
+//    public List<LetterDetailsDto> getLetterDetails() {
+//        return letterRepository.findLetterDetails();
+//    }
 
-    public String importLettersFromExcel(MultipartFile file) throws IOException {
-        List<LetterDto> letterDtos = ExcelDataImporter.importData(file, LetterDto.class);
-        List<Letter> letters = letterDtos.stream().map(letterMapper::toEntity).collect(Collectors.toList());
-        letterRepository.saveAll(letters);
-        return letters.size() + " letters have been imported successfully.";
-    }
-
-    public byte[] exportLettersToExcel() throws IOException {
-        List<LetterDto> letterDtos = letterRepository.findAll().stream().map(letterMapper::toDto)
-                .collect(Collectors.toList());
-        return ExcelDataExporter.exportData(letterDtos, LetterDto.class);
-    }
-
-    public byte[] generateLetterTemplate() throws IOException {
-        return ExcelTemplateGenerator.generateTemplateExcel(LetterDto.class);
-    }
+//    public List<LetterDetailsDto> findLetterDetailsBySenderId(Long senderId) {
+//        return letterRepository.findLetterDetailsBySenderId(senderId);
+//    }
 
     public LetterDto getLetterById(Long letterId) {
         Letter letter = findLetterById(letterId);
@@ -171,12 +153,4 @@ public class LetterService {
         Optional<Year> optionalYear = yearRepository.findByYearName(yearName);
         return optionalYear.orElseThrow(() -> new EntityNotFoundException("سال با مقدار " + yearName + " یافت نشد."));
     }
-
-    public String uploadLettersFromExcelFile(MultipartFile file) throws IOException {
-        List<LetterDto> letterDtos = ExcelDataImporter.importData(file, LetterDto.class);
-        List<Letter> letters = letterDtos.stream().map(letterMapper::toEntity).collect(Collectors.toList());
-        letterRepository.saveAll(letters);
-        return letters.size() + " نامه با موفقیت وارد شدند."; // Assuming "نامه" is the translation for "letter" in the context of documents
-    }
-
 }
