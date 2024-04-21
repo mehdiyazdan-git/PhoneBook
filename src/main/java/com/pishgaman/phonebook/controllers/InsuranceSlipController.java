@@ -77,17 +77,6 @@ public class InsuranceSlipController {
         return new ResponseEntity<>(createdInsuranceSlip, HttpStatus.CREATED);
     }
 
-    @GetMapping("/download-all-insuranceslips.xlsx")
-    public ResponseEntity<byte[]> downloadAllInsuranceSlipsExcel() throws IOException {
-        byte[] excelData = insuranceSlipService.exportInsuranceSlipsToExcel();
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
-        headers.setContentDisposition(ContentDisposition.attachment()
-                .filename("all_insuranceslips.xlsx")
-                .build());
-        return ResponseEntity.ok().headers(headers).body(excelData);
-    }
-
 
     @GetMapping("/template")
     public ResponseEntity<byte[]> downloadInsuranceSlipTemplate() {
@@ -103,10 +92,7 @@ public class InsuranceSlipController {
         }
     }
 
-    @CrossOrigin(
-            origins = "http://localhost:3000",
-            methods = {RequestMethod.GET, RequestMethod.POST},
-            allowedHeaders = "*")
+    @CrossOrigin
     @PostMapping("/{insuranceSlipId}/upload-file")
     public ResponseEntity<String> uploadInsuranceSlipFile(
             @PathVariable("insuranceSlipId") Long insuranceSlipId,
@@ -137,33 +123,36 @@ public class InsuranceSlipController {
         InsuranceSlipDto insuranceSlip = insuranceSlipService.findById(insuranceSlipId);
 
         byte[] fileData = insuranceSlip.getFile();
-        String fileExtension = insuranceSlip.getFileName().toLowerCase();
+        if (fileData == null) {
+            throw new EntityNotFoundException("No file found for insurance slip with id: " + insuranceSlipId);
+        }
+
+        String fileName = insuranceSlip.getFileName();
+        String fileExtension = Optional.ofNullable(fileName)
+                .filter(f -> f.contains("."))
+                .map(f -> f.substring(fileName.lastIndexOf(".") + 1))
+                .orElse("");
+
         MediaType mediaType = switch (fileExtension.toLowerCase()) {
             case "pdf" -> MediaType.APPLICATION_PDF;
-            case "docx", "doc" ->
-                    MediaType.valueOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
-            case "xlsx", "xls" ->
-                    MediaType.valueOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-            case "pptx", "ppt" ->
-                    MediaType.valueOf("application/vnd.openxmlformats-officedocument.presentationml.presentation");
+            case "docx", "doc" -> MediaType.valueOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document");
+            case "xlsx", "xls" -> MediaType.valueOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+            case "pptx", "ppt" -> MediaType.valueOf("application/vnd.openxmlformats-officedocument.presentationml.presentation");
             case "jpg", "jpeg", "png", "gif", "bmp" -> MediaType.IMAGE_JPEG;
             case "csv" -> MediaType.valueOf("text/csv");
-            case "tif" -> MediaType.valueOf("image/tiff");
+            case "tif", "tiff" -> MediaType.valueOf("image/tiff");
             case "txt" -> MediaType.valueOf("text/plain");
             case "zip" -> MediaType.valueOf("application/zip");
             default -> MediaType.APPLICATION_OCTET_STREAM;
         };
 
-        if (fileData == null) {
-            throw new EntityNotFoundException("No file found for insurance slip with id: " + insuranceSlipId);
-        }
-        String fileName = "certificate_" + insuranceSlipId + "." + fileExtension;
-        ByteArrayResource resource = new ByteArrayResource(insuranceSlip.getFile());
+        ByteArrayResource resource = new ByteArrayResource(fileData);
         return ResponseEntity.ok()
                 .contentType(mediaType)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
                 .body(resource);
     }
+
 
     @PutMapping("/{insuranceSlipId}")
     public ResponseEntity<InsuranceSlipDto> updateInsuranceSlip(@PathVariable("insuranceSlipId") Long insuranceSlipId, @RequestBody InsuranceSlipDto insuranceSlipDto) {

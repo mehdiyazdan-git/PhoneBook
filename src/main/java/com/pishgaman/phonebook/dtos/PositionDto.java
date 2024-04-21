@@ -12,7 +12,7 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class PositionDto implements Serializable {
+public class PositionDto  extends BaseDto  implements Serializable {
     private Long id;
     private String name;
 }

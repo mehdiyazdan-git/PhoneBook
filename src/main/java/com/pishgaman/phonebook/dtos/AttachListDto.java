@@ -11,7 +11,7 @@ import java.io.Serializable;
  */
 @Data
 @NoArgsConstructor
-public class AttachListDto implements Serializable {
+public class AttachListDto  extends BaseDto  implements Serializable {
     private Long id;
     private String fileName;
     private String fileType;

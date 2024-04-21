@@ -9,7 +9,9 @@ import com.pishgaman.phonebook.mappers.ShareholderDetailMapper;
 import com.pishgaman.phonebook.mappers.ShareholderMapper;
 import com.pishgaman.phonebook.repositories.ShareholderRepository;
 import com.pishgaman.phonebook.searchforms.ShareholderSearchForm;
+import com.pishgaman.phonebook.security.user.UserRepository;
 import com.pishgaman.phonebook.specifications.ShareholderSpecification;
+import com.pishgaman.phonebook.utils.DateConvertor;
 import com.pishgaman.phonebook.utils.ExcelDataExporter;
 import com.pishgaman.phonebook.utils.ExcelDataImporter;
 import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
@@ -36,7 +38,13 @@ public class ShareHolderService {
     private final ShareholderRepository shareHolderRepository;
     private final ShareholderMapper shareHolderMapper;
     private final ShareholderDetailMapper shareholderDetailMapper;
+    private final DateConvertor dateConvertor;
+    private final UserRepository userRepository;
 
+    private String getFullName(Integer userId) {
+        if (userId == null) return "نامشخص";
+        return userRepository.findById(userId).map(user -> user.getFirstname() + " " + user.getLastname()).orElse("");
+    }
 
     public String uploadFromExcelFile(MultipartFile file) throws IOException {
         List<ShareholderDto> shareholderDtos = ExcelDataImporter.importData(file, ShareholderDto.class);
@@ -97,7 +105,12 @@ public class ShareHolderService {
     }
 
     public ShareholderDto findById(Long ShareHolderId) {
-        return shareHolderMapper.toDto(findShareHolderById(ShareHolderId));
+        ShareholderDto dto = shareHolderMapper.toDto(findShareHolderById(ShareHolderId));
+        dto.setCreateByFullName(getFullName(dto.getCreatedBy()));
+        dto.setLastModifiedByFullName(getFullName(dto.getLastModifiedBy()));
+        dto.setCreateAtJalali(dateConvertor.convertGregorianToJalali(dto.getCreatedDate()));
+        dto.setLastModifiedAtJalali(dateConvertor.convertGregorianToJalali(dto.getLastModifiedDate()));
+        return dto;
     }
 
     public ShareholderDto createShareHolder(ShareholderDto ShareHolderDto) {

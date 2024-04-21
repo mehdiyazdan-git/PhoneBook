@@ -6,7 +6,10 @@ import com.pishgaman.phonebook.entities.Sender;
 import com.pishgaman.phonebook.exceptions.EntityAlreadyExistsException;
 import com.pishgaman.phonebook.mappers.SenderMapper;
 import com.pishgaman.phonebook.repositories.SenderRepository;
+import com.pishgaman.phonebook.security.user.UserRepository;
+import com.pishgaman.phonebook.utils.DateConvertor;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -15,13 +18,16 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
+@RequiredArgsConstructor
 public class SenderService {
     private final SenderRepository senderRepository;
     private final SenderMapper senderMapper;
-    @Autowired
-    public SenderService(SenderRepository senderRepository, SenderMapper senderMapper) {
-        this.senderRepository = senderRepository;
-        this.senderMapper = senderMapper;
+    private final DateConvertor dateConvertor;
+    private final UserRepository userRepository;
+
+    private String getFullName(Integer userId) {
+        if (userId == null) return "نامشخص";
+        return userRepository.findById(userId).map(user -> user.getFirstname() + " " + user.getLastname()).orElse("");
     }
     public List<SenderDto> findAll(){
         return senderRepository.findAll().stream().map(senderMapper::toDto).collect(Collectors.toList());
@@ -38,7 +44,12 @@ public class SenderService {
         return optionalSender.get();
     }
     public SenderDto findById(Long senderId){
-        return senderMapper.toDto(findSenderById(senderId));
+        SenderDto dto = senderMapper.toDto(findSenderById(senderId));
+        dto.setCreateByFullName(getFullName(dto.getCreatedBy()));
+        dto.setLastModifiedByFullName(getFullName(dto.getLastModifiedBy()));
+        dto.setCreateAtJalali(dateConvertor.convertGregorianToJalali(dto.getCreatedDate()));
+        dto.setLastModifiedAtJalali(dateConvertor.convertGregorianToJalali(dto.getLastModifiedDate()));
+        return dto;
     }
     public SenderDto createSender(SenderDto senderDto){
         Sender senderByName = senderRepository.findSenderByName(senderDto.getName());

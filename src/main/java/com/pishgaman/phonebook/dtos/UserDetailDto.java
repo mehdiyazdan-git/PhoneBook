@@ -14,7 +14,7 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class UserDetailDto implements Serializable {
+public class UserDetailDto  extends BaseDto  implements  Serializable {
     private Integer id;
     private String firstname;
     private String lastname;

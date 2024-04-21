@@ -77,11 +77,8 @@ public class LetterController {
     @PostMapping("/import")
     public ResponseEntity<String> importLettersFromExcel(@RequestParam("file") MultipartFile file) {
         try {
-            String message = letterService.uploadLettersFromExcelFile(file);
+            String message = letterService.importLettersFromExcel(file);
             return ResponseEntity.ok(message);
-        } catch (IOException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Failed to import letters from Excel file: " + e.getMessage());
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(e.getMessage());
@@ -92,17 +89,13 @@ public class LetterController {
     }
 
     @GetMapping("/template")
-    public ResponseEntity<byte[]> downloadLetterTemplate() {
-        try {
-            byte[] templateBytes = letterService.generateLetterTemplate();
-            HttpHeaders headers = new HttpHeaders();
-            headers.setContentDispositionFormData("attachment", "letter_template.xlsx");
-            headers.setContentType(FileMediaType.getMediaType("xlsx"));
+    public ResponseEntity<byte[]> downloadLetterTemplate() throws IOException {
+        byte[] templateBytes = letterService.generateLetterTemplate();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDispositionFormData("attachment", "letter_template.xlsx");
+        headers.setContentType(FileMediaType.getMediaType("xlsx"));
 
-            return new ResponseEntity<>(templateBytes, headers, HttpStatus.OK);
-        } catch (IOException e) {
-            return ResponseEntity.internalServerError().body(null);
-        }
+        return new ResponseEntity<>(templateBytes, headers, HttpStatus.OK);
     }
 
     @GetMapping(path = "/{letterId}")

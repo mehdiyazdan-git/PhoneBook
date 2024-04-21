@@ -88,10 +88,7 @@ public class ShareHolderController {
         ShareholderDto createdShareholder = shareHolderService.createShareHolder(shareholderDto);
         return new ResponseEntity<>(createdShareholder, HttpStatus.CREATED);
     }
-    @CrossOrigin(
-            origins = "http://localhost:3000",
-            methods = {RequestMethod.GET, RequestMethod.POST},
-            allowedHeaders = "*")
+
     @PostMapping("/{shareHolderId}/upload-file")
     public ResponseEntity<String> uploadShareHolderFile(
             @PathVariable("shareHolderId") Long shareHolderId,

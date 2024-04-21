@@ -17,7 +17,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class InsuranceSlipDetailDto implements Serializable {
+public class InsuranceSlipDetailDto  extends BaseDto  implements Serializable {
     private Long id;
     private LocalDate issueDate;
     private String slipNumber;

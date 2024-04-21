@@ -8,7 +8,9 @@ import com.pishgaman.phonebook.mappers.YearMapper;
 import com.pishgaman.phonebook.repositories.LetterRepository;
 import com.pishgaman.phonebook.repositories.YearRepository;
 import com.pishgaman.phonebook.searchforms.YearSearch;
+import com.pishgaman.phonebook.security.user.UserRepository;
 import com.pishgaman.phonebook.specifications.YearSpecification;
+import com.pishgaman.phonebook.utils.DateConvertor;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -27,6 +29,13 @@ public class YearService {
     private final YearRepository yearRepository;
     private final YearMapper yearMapper;
     private final LetterRepository letterRepository;
+    private final UserRepository userRepository;
+    private final DateConvertor dateConvertor;
+
+    private String getFullName(Integer userId) {
+        if (userId == null) return "نامشخص";
+        return userRepository.findById(userId).map(user -> user.getFirstname() + " " + user.getLastname()).orElse("");
+    }
 
     public Page<YearDto> findAll(int page, int size, String sortBy, String order, YearSearch search) {
         Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
@@ -58,7 +67,12 @@ public class YearService {
         if (optionalYear.isEmpty()) {
             throw new EntityNotFoundException("سال با شناسه : " + yearId + " یافت نشد.");
         }
-        return yearMapper.toDto(optionalYear.get());
+        YearDto dto = yearMapper.toDto(optionalYear.get());
+        dto.setCreateByFullName(getFullName(dto.getCreatedBy()));
+        dto.setLastModifiedByFullName(getFullName(dto.getLastModifiedBy()));
+        dto.setCreateAtJalali(dateConvertor.convertGregorianToJalali(dto.getCreatedDate()));
+        dto.setLastModifiedAtJalali(dateConvertor.convertGregorianToJalali(dto.getLastModifiedDate()));
+        return dto;
     }
 
     public YearDto createYear(YearDto yearDto) {

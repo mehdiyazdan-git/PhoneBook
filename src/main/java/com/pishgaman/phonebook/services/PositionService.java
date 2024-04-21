@@ -3,10 +3,14 @@ package com.pishgaman.phonebook.services;
 import com.pishgaman.phonebook.dtos.PersonDto;
 import com.pishgaman.phonebook.dtos.PositionDto;
 import com.pishgaman.phonebook.entities.Position;
+import com.pishgaman.phonebook.exceptions.DatabaseIntegrityViolationException;
 import com.pishgaman.phonebook.mappers.PositionMapper;
+import com.pishgaman.phonebook.repositories.BoardMemberRepository;
 import com.pishgaman.phonebook.repositories.PositionRepository;
 import com.pishgaman.phonebook.searchforms.PositionSearch;
+import com.pishgaman.phonebook.security.user.UserRepository;
 import com.pishgaman.phonebook.specifications.PositionSpecification;
+import com.pishgaman.phonebook.utils.DateConvertor;
 import com.pishgaman.phonebook.utils.ExcelDataExporter;
 import com.pishgaman.phonebook.utils.ExcelDataImporter;
 import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
@@ -29,6 +33,14 @@ import java.util.stream.Collectors;
 public class PositionService {
     private final PositionRepository positionRepository;
     private final PositionMapper positionMapper;
+    private final BoardMemberRepository boardMemberRepository;
+    private final DateConvertor dateConvertor;
+    private final UserRepository userRepository;
+
+    private String getFullName(Integer userId) {
+        if (userId == null) return "نامشخص";
+        return userRepository.findById(userId).map(user -> user.getFirstname() + " " + user.getLastname()).orElse("");
+    }
 
     public Page<PositionDto> findAll(int page, int size, String sortBy, String order, PositionSearch search) {
         Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);
@@ -67,7 +79,12 @@ public class PositionService {
         if (optionalPosition.isEmpty()) {
             throw new EntityNotFoundException("پست با شناسه : " + positionId + " یافت نشد.");
         }
-        return positionMapper.toDto(optionalPosition.get());
+        PositionDto dto = positionMapper.toDto(optionalPosition.get());
+        dto.setCreateByFullName(getFullName(dto.getCreatedBy()));
+        dto.setLastModifiedByFullName(getFullName(dto.getLastModifiedBy()));
+        dto.setCreateAtJalali(dateConvertor.convertGregorianToJalali(dto.getCreatedDate()));
+        dto.setLastModifiedAtJalali(dateConvertor.convertGregorianToJalali(dto.getLastModifiedDate()));
+        return dto;
     }
 
     public PositionDto createPosition(PositionDto positionDto) {
@@ -89,6 +106,9 @@ public class PositionService {
     public void deletePosition(Long positionId) {
         if (!positionRepository.existsById(positionId)) {
             throw new EntityNotFoundException("پست با شناسه : " + positionId + " یافت نشد.");
+        }
+        if (boardMemberRepository.existsByPositionId(positionId)){
+            throw new DatabaseIntegrityViolationException("امکان حذف این سمت وجود ندارد. ابتدا باید این سمت را از لیست اعضا حذف کنید.");
         }
         positionRepository.deleteById(positionId);
     }

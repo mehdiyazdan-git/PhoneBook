@@ -9,7 +9,7 @@ import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
-public class LetterDetailsDto implements Serializable {
+public class LetterDetailsDto  extends BaseDto  implements Serializable {
     private Long id;
     private String content;
     private LocalDate creationDate;

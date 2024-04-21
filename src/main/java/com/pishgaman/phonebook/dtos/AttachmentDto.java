@@ -13,7 +13,7 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AttachmentDto implements Serializable {
+public class AttachmentDto  extends BaseDto  implements Serializable {
     private Long id;
     private String fileName;
     private String fileType;

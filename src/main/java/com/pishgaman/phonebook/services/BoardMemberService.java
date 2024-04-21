@@ -2,6 +2,7 @@ package com.pishgaman.phonebook.services;
 
 import com.pishgaman.phonebook.dtos.BoardMemberDetailsDto;
 import com.pishgaman.phonebook.dtos.BoardMemberDto;
+import com.pishgaman.phonebook.dtos.BoardMemberPDFDto;
 import com.pishgaman.phonebook.dtos.CompanyDto;
 import com.pishgaman.phonebook.entities.BoardMember;
 import com.pishgaman.phonebook.entities.Company;
@@ -10,15 +11,15 @@ import com.pishgaman.phonebook.entities.Position;
 import com.pishgaman.phonebook.exceptions.BoardMemberAlreadyExistsException;
 import com.pishgaman.phonebook.mappers.BoardMemberDetailsMapper;
 import com.pishgaman.phonebook.mappers.BoardMemberMapper;
+import com.pishgaman.phonebook.mappers.BoardMemberPDFMapper;
 import com.pishgaman.phonebook.repositories.BoardMemberRepository;
 import com.pishgaman.phonebook.repositories.CompanyRepository;
 import com.pishgaman.phonebook.repositories.PersonRepository;
 import com.pishgaman.phonebook.repositories.PositionRepository;
 import com.pishgaman.phonebook.searchforms.BoardMemberSearch;
+import com.pishgaman.phonebook.security.user.UserRepository;
 import com.pishgaman.phonebook.specifications.BoardMemberSpecification;
-import com.pishgaman.phonebook.utils.ExcelDataExporter;
-import com.pishgaman.phonebook.utils.ExcelDataImporter;
-import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
+import com.pishgaman.phonebook.utils.*;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -44,6 +45,14 @@ public class BoardMemberService {
     private final PersonRepository personRepository;
     private final CompanyRepository companyRepository;
     private final PositionRepository positionRepository;
+    private final BoardMemberPDFMapper boardMemberPDFMapper;
+    private final DateConvertor dateConvertor;
+    private final UserRepository userRepository;
+
+    private String getFullName(Integer userId) {
+        if (userId == null) return "نامشخص";
+        return userRepository.findById(userId).map(user -> user.getFirstname() + " " + user.getLastname()).orElse("");
+    }
 
     public Page<BoardMemberDetailsDto> findAll(int page, int size, String sortBy, String order, BoardMemberSearch search) {
         try {
@@ -64,12 +73,39 @@ public class BoardMemberService {
             if (optionalBoardMember.isEmpty()) {
                 throw new EntityNotFoundException("عضو هیئت مدیره با شناسه: " + boardMemberId + " یافت نشد.");
             }
-            return boardMemberMapper.toDto(optionalBoardMember.get());
+            BoardMemberDto dto = boardMemberMapper.toDto(optionalBoardMember.get());
+            dto.setCreateByFullName(getFullName(dto.getCreatedBy()));
+            dto.setLastModifiedByFullName(getFullName(dto.getLastModifiedBy()));
+            dto.setCreateAtJalali(dateConvertor.convertGregorianToJalali(dto.getCreatedDate()));
+            dto.setLastModifiedAtJalali(dateConvertor.convertGregorianToJalali(dto.getLastModifiedDate()));
+            return dto;
         } catch (Exception e) {
             e.printStackTrace();
             throw e;
         }
     }
+    public List<BoardMemberDetailsDto> findAllByPersonId(Long personId) {
+        return boardMemberRepository.findAllByPersonId(personId)
+                .stream()
+                .map(boardMemberDetailsMapper::toDto)
+                .collect(Collectors.toList());
+    }
+    public byte [] generateBoardMemberPDFByPersonId(Long personId) throws IllegalAccessException, IOException {
+        List<BoardMemberPDFDto> boardMemberDetailsDtos = findAllByPersonIdForPDFGeneration(personId);
+        return PDFDataExporter.exportData(boardMemberDetailsDtos, BoardMemberPDFDto.class);
+    }
+    public List<BoardMemberPDFDto> getBoardMemberPDFByPersonId1(Long personId) throws IllegalAccessException {
+        return findAllByPersonIdForPDFGeneration(personId);
+    }
+
+    private List<BoardMemberPDFDto> findAllByPersonIdForPDFGeneration(Long personId) {
+       return boardMemberRepository
+               .findAllByPersonId(personId)
+               .stream()
+               .map(boardMemberPDFMapper::toDto)
+               .collect(Collectors.toList());
+    }
+
     public String importBoardMembersFromExcel(MultipartFile file) throws IOException {
         List<BoardMemberDto> boardMemberDtos = ExcelDataImporter.importData(file, BoardMemberDto.class);
         List<BoardMember> boardMembers = boardMemberDtos.stream().map(boardMemberMapper::toEntity).collect(Collectors.toList());

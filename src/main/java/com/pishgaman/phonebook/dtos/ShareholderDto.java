@@ -16,7 +16,7 @@ import java.math.BigDecimal;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class ShareholderDto implements Serializable {
+public class ShareholderDto  extends BaseDto  implements Serializable {
     private Long id;
     private Long personId;
     private Integer numberOfShares;

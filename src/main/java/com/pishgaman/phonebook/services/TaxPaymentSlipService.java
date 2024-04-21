@@ -8,7 +8,9 @@ import com.pishgaman.phonebook.mappers.TaxPaymentSlipDetailMapper;
 import com.pishgaman.phonebook.mappers.TaxPaymentSlipMapper;
 import com.pishgaman.phonebook.repositories.TaxPaymentSlipRepository;
 import com.pishgaman.phonebook.searchforms.TaxPaymentSlipSearchForm;
+import com.pishgaman.phonebook.security.user.UserRepository;
 import com.pishgaman.phonebook.specifications.TaxPaymentSlipSpecification;
+import com.pishgaman.phonebook.utils.DateConvertor;
 import com.pishgaman.phonebook.utils.ExcelDataExporter;
 import com.pishgaman.phonebook.utils.ExcelDataImporter;
 import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
@@ -33,6 +35,8 @@ public class TaxPaymentSlipService {
     private final TaxPaymentSlipRepository taxPaymentSlipRepository;
     private final TaxPaymentSlipMapper taxPaymentSlipMapper;
     private final TaxPaymentSlipDetailMapper taxPaymentSlipDetailMapper;
+    private final UserRepository userRepository;
+    private final DateConvertor dateConvertor;
 
     public String uploadFromExcelFile(MultipartFile file) throws IOException {
         List<TaxPaymentSlipDto> taxPaymentSlipDtos = ExcelDataImporter.importData(file, TaxPaymentSlipDto.class);
@@ -78,8 +82,18 @@ public class TaxPaymentSlipService {
         return optionalTaxPaymentSlip.get();
     }
 
+    private String getFullName(Integer userId) {
+        if (userId == null) return "نامشخص";
+        return userRepository.findById(userId).map(user -> user.getFirstname() + " " + user.getLastname()).orElse("");
+    }
+
     public TaxPaymentSlipDto findById(Long taxPaymentSlipId) {
-        return taxPaymentSlipMapper.toDto(findTaxPaymentSlipById(taxPaymentSlipId));
+        TaxPaymentSlipDto dto = taxPaymentSlipMapper.toDto(findTaxPaymentSlipById(taxPaymentSlipId));
+        dto.setCreateByFullName(getFullName(dto.getCreatedBy()));
+        dto.setLastModifiedByFullName(getFullName(dto.getLastModifiedBy()));
+        dto.setCreateAtJalali(dateConvertor.convertGregorianToJalali(dto.getCreatedDate()));
+        dto.setLastModifiedAtJalali(dateConvertor.convertGregorianToJalali(dto.getLastModifiedDate()));
+        return dto;
     }
 
     public TaxPaymentSlipDto createTaxPaymentSlip(TaxPaymentSlipDto taxPaymentSlipDto) {

@@ -148,13 +148,16 @@ public class AuthenticationService {
             return new AuthenticationResponse();
         }
     }
-
     public void signOut(String accessToken) {
-        tokenRepository.findByToken(accessToken).ifPresent(token -> {
-            token.setRevoked(true);
-            tokenRepository.save(token);
-        });
-    }
+       try {
+           var user = userRepository.findByUsername(jwtService.extractUsername(accessToken))
+                   .orElseThrow();
+           revokeAllUserTokens(user);
+       }catch (Exception e){
+             e.printStackTrace();
+       }
+
+    };
 
     private void saveUserToken(User user, String jwtToken) {
         var token = Token.builder()

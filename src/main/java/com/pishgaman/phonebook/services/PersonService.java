@@ -16,8 +16,10 @@ import com.pishgaman.phonebook.repositories.DocumentRepository;
 import com.pishgaman.phonebook.repositories.PersonRepository;
 import com.pishgaman.phonebook.repositories.ShareholderRepository;
 import com.pishgaman.phonebook.searchforms.PersonSearch;
+import com.pishgaman.phonebook.security.user.UserRepository;
 import com.pishgaman.phonebook.specifications.PersonSpecification;
 import com.pishgaman.phonebook.specifications.PositionSpecification;
+import com.pishgaman.phonebook.utils.DateConvertor;
 import com.pishgaman.phonebook.utils.ExcelDataExporter;
 import com.pishgaman.phonebook.utils.ExcelDataImporter;
 import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
@@ -50,6 +52,13 @@ public class PersonService {
     private final DocumentRepository documentRepository;
     private final BoardMemberRepository boardMemberRepository;
     private final ShareholderRepository shareholderRepository;
+    private final DateConvertor dateConvertor;
+    private final UserRepository userRepository;
+
+    private String getFullName(Integer userId) {
+        if (userId == null) return "نامشخص";
+        return userRepository.findById(userId).map(user -> user.getFirstname() + " " + user.getLastname()).orElse("");
+    }
 
 
     public Page<PersonDto> findAll(PersonSearch search, int page, int size, String sortBy, String order) {
@@ -116,7 +125,12 @@ public class PersonService {
     }
 
     public PersonDto findById(Long personId){
-        return personMapper.toDto(findPersonById(personId));
+        PersonDto dto = personMapper.toDto(findPersonById(personId));
+        dto.setCreateByFullName(getFullName(dto.getCreatedBy()));
+        dto.setLastModifiedByFullName(getFullName(dto.getLastModifiedBy()));
+        dto.setCreateAtJalali(dateConvertor.convertGregorianToJalali(dto.getCreatedDate()));
+        dto.setLastModifiedAtJalali(dateConvertor.convertGregorianToJalali(dto.getLastModifiedDate()));
+        return dto;
     }
 
     public PersonDto createPerson(PersonDto personDto){
@@ -128,9 +142,17 @@ public class PersonService {
     }
 
     public PersonDto updatePerson(Long personId, PersonDto personDto) {
-        Person personById = findPersonById(personId);
-        Person personToBeUpdate = personMapper.partialUpdate(personDto, personById);
-        Person updated = personRepository.save(personToBeUpdate);
+        Person person = findPersonById(personId);
+        person.setFirstName( personDto.getFirstName() );
+        person.setLastName( personDto.getLastName() );
+        person.setFatherName( personDto.getFatherName() );
+        person.setNationalId( personDto.getNationalId() );
+        person.setBirthDate( personDto.getBirthDate() );
+        person.setRegistrationNumber( personDto.getRegistrationNumber() );
+        person.setPostalCode( personDto.getPostalCode() );
+        person.setAddress( personDto.getAddress() );
+        person.setPhoneNumber( personDto.getPhoneNumber() );
+        Person updated = personRepository.save(person);
         return personMapper.toDto(updated);
     }
 

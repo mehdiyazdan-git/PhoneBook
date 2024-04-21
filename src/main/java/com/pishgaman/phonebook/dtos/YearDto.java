@@ -12,7 +12,7 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class YearDto implements Serializable {
+public class YearDto extends BaseDto implements Serializable {
     private Long id;
     private Long name;
     private Long startingLetterNumber;

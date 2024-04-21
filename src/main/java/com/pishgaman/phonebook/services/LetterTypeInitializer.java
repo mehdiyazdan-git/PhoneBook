@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pishgaman.phonebook.entities.LetterType;
 import com.pishgaman.phonebook.repositories.LetterTypeRepository;
+import com.pishgaman.phonebook.security.user.UserRepository;
+import com.pishgaman.phonebook.utils.DateConvertor;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.ClassPathResource;
@@ -18,6 +20,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class LetterTypeInitializer {
     private final LetterTypeRepository letterTypeRepository;
+
+
 
     @PostConstruct
     public void init() throws IOException {

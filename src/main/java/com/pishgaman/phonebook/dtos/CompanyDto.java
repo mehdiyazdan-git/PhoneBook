@@ -13,7 +13,7 @@ import java.time.LocalDate;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class CompanyDto implements Serializable {
+public class CompanyDto  extends BaseDto  implements Serializable {
     private Long id;
     private String taxEconomicCode;
     private String taxFileNumber;
@@ -36,4 +36,5 @@ public class CompanyDto implements Serializable {
     private String insurancePortalUsername;
     private String insurancePortalPassword;
     private String insuranceBranch;
+    private String letterPrefix;
 }

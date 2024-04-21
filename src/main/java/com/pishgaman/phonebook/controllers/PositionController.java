@@ -110,11 +110,7 @@ public class PositionController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePosition(@PathVariable Long id) {
-        try {
-            positionService.deletePosition(id);
-            return ResponseEntity.noContent().build();
-        } catch (DataIntegrityViolationException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage(), e);
-        }
+        positionService.deletePosition(id);
+        return ResponseEntity.noContent().build();
     }
 }

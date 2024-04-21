@@ -1,5 +1,6 @@
 package com.pishgaman.phonebook.dtos;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.pishgaman.phonebook.enums.LetterState;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -14,7 +15,8 @@ import java.time.LocalDate;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class LetterDto implements Serializable {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class LetterDto  extends BaseDto  implements Serializable {
     private Long id;
     private String content;
     private LocalDate creationDate;

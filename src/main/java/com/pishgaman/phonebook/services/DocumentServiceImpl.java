@@ -9,6 +9,8 @@ import com.pishgaman.phonebook.repositories.CompanyRepository;
 import com.pishgaman.phonebook.repositories.DocumentRepository;
 import com.pishgaman.phonebook.repositories.LetterRepository;
 import com.pishgaman.phonebook.repositories.PersonRepository;
+import com.pishgaman.phonebook.security.user.UserRepository;
+import com.pishgaman.phonebook.utils.DateConvertor;
 import com.pishgaman.phonebook.utils.ExcelDataExporter;
 import com.pishgaman.phonebook.utils.ExcelDataImporter;
 import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
@@ -31,6 +33,23 @@ public class DocumentServiceImpl implements DocumentService {
     private final PersonRepository personRepository;
     private final CompanyRepository companyRepository;
     private final LetterRepository letterRepository;
+    private final DateConvertor dateConvertor;
+    private final UserRepository userRepository;
+
+    private String getFullName(Integer userId) {
+        if (userId == null) return "نامشخص";
+        return userRepository.findById(userId).map(user -> user.getFirstname() + " " + user.getLastname()).orElse("");
+    }
+
+    public DocumentDto findById(Long documentId){
+        Document document = documentRepository.findById(documentId).orElseThrow(() -> new RuntimeException("Document not found with id: " + documentId));
+        DocumentDto dto = documentMapper.toDto(document);
+        dto.setCreateByFullName(getFullName(dto.getCreatedBy()));
+        dto.setLastModifiedByFullName(getFullName(dto.getLastModifiedBy()));
+        dto.setCreateAtJalali(dateConvertor.convertGregorianToJalali(dto.getCreatedDate()));
+        dto.setLastModifiedAtJalali(dateConvertor.convertGregorianToJalali(dto.getLastModifiedDate()));
+        return dto;
+    }
 
     @Override
     public DocumentDto createDocument(DocumentDto documentDto) {

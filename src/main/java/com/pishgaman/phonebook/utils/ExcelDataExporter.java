@@ -1,11 +1,15 @@
 package com.pishgaman.phonebook.utils;
 
+import com.github.eloyzone.jalalicalendar.DateConverter;
+import com.github.eloyzone.jalalicalendar.JalaliDate;
+import com.github.eloyzone.jalalicalendar.JalaliDateFormatter;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.time.LocalDate;
 import java.util.List;
 
 public class ExcelDataExporter {
@@ -38,7 +42,7 @@ public class ExcelDataExporter {
                 sheet.autoSizeColumn(i);
             }
 
-            // Populate data rows
+
             int rowNum = 1;
             for (T item : data) {
                 Row dataRow = sheet.createRow(rowNum++);
@@ -53,6 +57,8 @@ public class ExcelDataExporter {
                                 cell.setCellValue(((Number) value).doubleValue());
                             } else if (value instanceof Boolean) {
                                 cell.setCellValue((Boolean) value);
+                            }else if (value instanceof LocalDate) {
+                                cell.setCellValue(convertDateToJalali((LocalDate) value));
                             } else {
                                 cell.setCellValue(value.toString());
                             }
@@ -80,5 +86,21 @@ public class ExcelDataExporter {
         style.setBottomBorderColor(IndexedColors.BLACK.getIndex());
         style.setRightBorderColor(IndexedColors.BLACK.getIndex());
         style.setLeftBorderColor(IndexedColors.BLACK.getIndex());
+    }
+
+    private static String convertDateToJalali(LocalDate localDate) {
+        if (localDate == null) {
+            return null;
+        }
+        DateConverter dateConverter = new DateConverter();
+        int gregorianYear = localDate.getYear();
+        int gregorianMonth = localDate.getMonthValue();
+        int gregorianDay = localDate.getDayOfMonth();
+        JalaliDate jalaliDate = dateConverter.gregorianToJalali(gregorianYear, gregorianMonth, gregorianDay);
+
+        if (jalaliDate != null) {
+            return jalaliDate.format(new JalaliDateFormatter("yyyy/mm/dd"));
+        }
+        return null;
     }
 }

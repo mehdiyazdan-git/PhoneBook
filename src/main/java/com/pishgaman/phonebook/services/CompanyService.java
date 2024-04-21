@@ -12,7 +12,9 @@ import com.pishgaman.phonebook.exceptions.EntityAlreadyExistsException;
 import com.pishgaman.phonebook.mappers.CompanyMapper;
 import com.pishgaman.phonebook.repositories.*;
 import com.pishgaman.phonebook.searchforms.CompanySearch;
+import com.pishgaman.phonebook.security.user.UserRepository;
 import com.pishgaman.phonebook.specifications.CompanySpecification;
+import com.pishgaman.phonebook.utils.DateConvertor;
 import com.pishgaman.phonebook.utils.ExcelDataExporter;
 import com.pishgaman.phonebook.utils.ExcelDataImporter;
 import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
@@ -45,6 +47,15 @@ public class CompanyService {
     private final BoardMemberRepository boardMemberRepository;
     private final ShareholderRepository shareholderRepository;
     private final LetterRepository letterRepository;
+    private final InsuranceSlipRepository insuranceSlipRepository;
+    private final TaxPaymentSlipRepository taxPaymentSlipRepository;
+    private final DateConvertor dateConvertor;
+    private final UserRepository userRepository;
+
+    private String getFullName(Integer userId) {
+        if (userId == null) return "نامشخص";
+        return userRepository.findById(userId).map(user -> user.getFirstname() + " " + user.getLastname()).orElse("");
+    }
 
 
     public byte[] generateAllCompaniesExcel() throws IOException {
@@ -287,7 +298,12 @@ public class CompanyService {
     }
 
     public CompanyDto findById(Long companyId) {
-        return companyMapper.toDto(findCompanyById(companyId));
+        CompanyDto dto = companyMapper.toDto(findCompanyById(companyId));
+        dto.setCreateByFullName(getFullName(dto.getCreatedBy()));
+        dto.setLastModifiedByFullName(getFullName(dto.getLastModifiedBy()));
+        dto.setCreateAtJalali(dateConvertor.convertGregorianToJalali(dto.getCreatedDate()));
+        dto.setLastModifiedAtJalali(dateConvertor.convertGregorianToJalali(dto.getLastModifiedDate()));
+        return dto;
     }
 
     public CompanyDto createCompany(CompanyDto companyDto) {
@@ -339,6 +355,12 @@ public class CompanyService {
             }
             if (letterRepository.existsByCompanyId(companyId)){
                 throw new DatabaseIntegrityViolationException("امکان حذف شرکت وجود ندارد. ابتدا همه نامه های این شرکت را حذف کنید.");
+            }
+            if (insuranceSlipRepository.existsByCompanyId(companyId)){
+                throw new DatabaseIntegrityViolationException("امکان حذف شرکت وجود ندارد. ابتدا همه فیش های بیمه این شرکت را حذف کنید.");
+            }
+            if (taxPaymentSlipRepository.existsByCompanyId(companyId)){
+                throw new DatabaseIntegrityViolationException("امکان حذف شرکت وجود ندارد. ابتدا همه فیش های مالیاتی این شرکت را حذف کنید.");
             }
             companyRepository.deleteById(companyId);
             return "شرکت با موفقیت حذف شد.";

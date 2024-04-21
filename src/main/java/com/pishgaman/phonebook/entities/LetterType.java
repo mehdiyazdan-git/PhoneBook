@@ -16,7 +16,7 @@ import java.util.Set;
 @Setter
 @ToString
 @RequiredArgsConstructor
-public class LetterType {
+public class LetterType  extends BaseEntity {
     @Id
     @GeneratedValue(strategy = jakarta.persistence.GenerationType.IDENTITY)
     private Long id;

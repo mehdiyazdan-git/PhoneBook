@@ -2,6 +2,7 @@ package com.pishgaman.phonebook.controllers;
 
 import com.pishgaman.phonebook.dtos.CompanyDto;
 import com.pishgaman.phonebook.dtos.CompanySelect;
+import com.pishgaman.phonebook.exceptions.DatabaseIntegrityViolationException;
 import com.pishgaman.phonebook.exceptions.EntityAlreadyExistsException;
 import com.pishgaman.phonebook.searchforms.CompanySearch;
 import com.pishgaman.phonebook.services.CompanyService;
@@ -62,8 +63,11 @@ public class CompanyController {
         } catch (EntityNotFoundException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(e.getMessage());
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        } catch (DatabaseIntegrityViolationException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("Error processing Excel file: " + e.getMessage());
+        }catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error processing Excel file: " + e.getMessage());
         }
     }
@@ -117,17 +121,21 @@ public class CompanyController {
             return ResponseEntity.ok(updatedCompany);
         } catch (EntityAlreadyExistsException e){
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        } catch (DatabaseIntegrityViolationException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT)
+                    .body("Error processing Excel file: " + e.getMessage());
+        }catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error processing Excel file: " + e.getMessage());
         }
     }
 
     @DeleteMapping("/{companyId}")
     public ResponseEntity<String> deleteCompany(@PathVariable("companyId") Long companyId) {
-        try {
-            String message = companyService.removeCompany(companyId);
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).body(message);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-        }
+        String message = companyService.removeCompany(companyId);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(message);
     }
 }

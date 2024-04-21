@@ -18,7 +18,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class TaxPaymentSlipDto implements Serializable {
+public class TaxPaymentSlipDto extends BaseDto implements Serializable {
     private Long id;
     private LocalDate issueDate;
     private String slipNumber;

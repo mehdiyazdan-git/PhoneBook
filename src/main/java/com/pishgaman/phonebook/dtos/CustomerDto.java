@@ -16,7 +16,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CustomerDto implements Serializable {
+public class CustomerDto  extends BaseDto  implements Serializable {
     private Long id;
     private String name;
     private String address;

@@ -5,7 +5,10 @@ import com.pishgaman.phonebook.dtos.AttachmentDto;
 import com.pishgaman.phonebook.entities.Attachment;
 import com.pishgaman.phonebook.mappers.AttachmentMapper;
 import com.pishgaman.phonebook.repositories.AttachmentRepository;
+import com.pishgaman.phonebook.security.user.UserRepository;
+import com.pishgaman.phonebook.utils.DateConvertor;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,13 +18,16 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@RequiredArgsConstructor
 public class AttachmentService {
     private final AttachmentRepository attachmentRepository;
     private final AttachmentMapper attachmentMapper;
-    @Autowired
-    public AttachmentService(AttachmentRepository attachmentRepository, AttachmentMapper attachmentMapper) {
-        this.attachmentRepository = attachmentRepository;
-        this.attachmentMapper = attachmentMapper;
+    private final DateConvertor dateConvertor;
+    private final UserRepository userRepository;
+
+    private String getFullName(Integer userId) {
+        if (userId == null) return "نامشخص";
+        return userRepository.findById(userId).map(user -> user.getFirstname() + " " + user.getLastname()).orElse("");
     }
     @Transactional(readOnly = true)
     public byte[] getAttachmentById(Long id) throws IOException {

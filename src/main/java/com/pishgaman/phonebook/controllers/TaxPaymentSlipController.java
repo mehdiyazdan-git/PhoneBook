@@ -91,10 +91,7 @@ public class TaxPaymentSlipController {
         return new ResponseEntity<>(createdTaxPaymentSlip, HttpStatus.CREATED);
     }
 
-    @CrossOrigin(
-            origins = "http://localhost:3000",
-            methods = {RequestMethod.GET, RequestMethod.POST},
-            allowedHeaders = "*")
+
     @PostMapping("/{taxPaymentSlipId}/upload-file")
     public ResponseEntity<String> uploadTaxPaymentSlipFile(
             @PathVariable("taxPaymentSlipId") Long taxPaymentSlipId,

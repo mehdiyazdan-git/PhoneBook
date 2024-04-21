@@ -13,7 +13,7 @@ import java.io.Serializable;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class SenderDto implements Serializable {
+public class SenderDto  extends BaseDto  implements  Serializable {
     private Long id;
     private String name;
     private String address;

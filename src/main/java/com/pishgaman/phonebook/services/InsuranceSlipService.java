@@ -3,12 +3,16 @@ package com.pishgaman.phonebook.services;
 import com.pishgaman.phonebook.dtos.InsuranceSlipDetailDto;
 import com.pishgaman.phonebook.dtos.InsuranceSlipDto;
 import com.pishgaman.phonebook.dtos.LetterDto;
+import com.pishgaman.phonebook.dtos.imports.InsuranceSlipExcelDto;
+import com.pishgaman.phonebook.dtos.imports.InsuranceSlipExcelMapper;
 import com.pishgaman.phonebook.entities.InsuranceSlip;
 import com.pishgaman.phonebook.mappers.InsuranceSlipDetailMapper;
 import com.pishgaman.phonebook.mappers.InsuranceSlipMapper;
 import com.pishgaman.phonebook.repositories.InsuranceSlipRepository;
 import com.pishgaman.phonebook.searchforms.InsuranceSlipSearchForm;
+import com.pishgaman.phonebook.security.user.UserRepository;
 import com.pishgaman.phonebook.specifications.InsuranceSlipSpecification;
+import com.pishgaman.phonebook.utils.DateConvertor;
 import com.pishgaman.phonebook.utils.ExcelDataExporter;
 import com.pishgaman.phonebook.utils.ExcelDataImporter;
 import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
@@ -34,6 +38,14 @@ public class InsuranceSlipService {
     private final InsuranceSlipRepository insuranceSlipRepository;
     private final InsuranceSlipMapper insuranceSlipMapper;
     private final InsuranceSlipDetailMapper insuranceSlipDetailMapper;
+    private final DateConvertor dateConvertor;
+    private final UserRepository userRepository;
+    private final InsuranceSlipExcelMapper insuranceSlipExcelMapper;
+
+    private String getFullName(Integer userId) {
+        if (userId == null) return "نامشخص";
+        return userRepository.findById(userId).map(user -> user.getFirstname() + " " + user.getLastname()).orElse("");
+    }
 
     public String uploadFromExcelFile(MultipartFile file) throws IOException {
         List<InsuranceSlipDto> insuranceSlipDtos = ExcelDataImporter.importData(file, InsuranceSlipDto.class);
@@ -51,12 +63,6 @@ public class InsuranceSlipService {
         List<InsuranceSlip> insuranceSlips = insuranceSlipDtos.stream().map(insuranceSlipMapper::toEntity).collect(Collectors.toList());
         insuranceSlipRepository.saveAll(insuranceSlips);
         return insuranceSlips.size() + " insurance slips have been imported successfully.";
-    }
-
-    public byte[] exportInsuranceSlipsToExcel() throws IOException {
-        List<InsuranceSlipDto> insuranceSlipDtos = insuranceSlipRepository.findAll().stream().map(insuranceSlipMapper::toDto)
-                .collect(Collectors.toList());
-        return ExcelDataExporter.exportData(insuranceSlipDtos, InsuranceSlipDto.class);
     }
 
 
@@ -81,7 +87,12 @@ public class InsuranceSlipService {
     }
 
     public InsuranceSlipDto findById(Long insuranceSlipId) {
-        return insuranceSlipMapper.toDto(findInsuranceSlipById(insuranceSlipId));
+        InsuranceSlipDto dto = insuranceSlipMapper.toDto(findInsuranceSlipById(insuranceSlipId));
+        dto.setCreateByFullName(getFullName(dto.getCreatedBy()));
+        dto.setLastModifiedByFullName(getFullName(dto.getLastModifiedBy()));
+        dto.setCreateAtJalali(dateConvertor.convertGregorianToJalali(dto.getCreatedDate()));
+        dto.setLastModifiedAtJalali(dateConvertor.convertGregorianToJalali(dto.getLastModifiedDate()));
+        return dto;
     }
 
     public InsuranceSlipDto createInsuranceSlip(InsuranceSlipDto insuranceSlipDto) {

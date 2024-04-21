@@ -14,7 +14,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class DocumentDetailDto implements Serializable {
+public class DocumentDetailDto  extends BaseDto  implements Serializable {
     private Long id;
     private String documentName;
     private String documentType;

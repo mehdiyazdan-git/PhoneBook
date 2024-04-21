@@ -14,7 +14,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class BoardMemberDto implements Serializable {
+public class BoardMemberDto  extends BaseDto  implements Serializable {
     private Long id;
     private Long personId;
     private Long companyId;

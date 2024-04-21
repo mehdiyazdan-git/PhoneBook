@@ -4,16 +4,15 @@ import com.pishgaman.phonebook.dtos.CustomerDto;
 import com.pishgaman.phonebook.dtos.CustomerSelect;
 import com.pishgaman.phonebook.dtos.DocumentDto;
 import com.pishgaman.phonebook.entities.Customer;
+import com.pishgaman.phonebook.exceptions.DatabaseIntegrityViolationException;
 import com.pishgaman.phonebook.exceptions.EntityAlreadyExistsException;
 import com.pishgaman.phonebook.mappers.CustomerMapper;
 import com.pishgaman.phonebook.repositories.CustomerRepository;
 import com.pishgaman.phonebook.repositories.LetterRepository;
 import com.pishgaman.phonebook.searchforms.CustomerSearch;
+import com.pishgaman.phonebook.security.user.UserRepository;
 import com.pishgaman.phonebook.specifications.CustomerSpecification;
-import com.pishgaman.phonebook.utils.ExcelDataExporter;
-import com.pishgaman.phonebook.utils.ExcelDataImporter;
-import com.pishgaman.phonebook.utils.ExcelRowParser;
-import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
+import com.pishgaman.phonebook.utils.*;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
@@ -40,6 +39,13 @@ import java.util.stream.Collectors;
 public class CustomerService {
     private final CustomerRepository customerRepository;
     private final CustomerMapper customerMapper;
+    private final DateConvertor dateConvertor;
+    private final UserRepository userRepository;
+
+    private String getFullName(Integer userId) {
+        if (userId == null) return "نامشخص";
+        return userRepository.findById(userId).map(user -> user.getFirstname() + " " + user.getLastname()).orElse("");
+    }
 
     public String importCustomersFromExcel1(MultipartFile file) throws IOException {
         if (file.isEmpty()) {
@@ -200,7 +206,12 @@ public class CustomerService {
     }
 
     public CustomerDto findById(Long customerId) {
-        return customerMapper.toDto(findCustomerById(customerId));
+        CustomerDto dto = customerMapper.toDto(findCustomerById(customerId));
+        dto.setCreateByFullName(getFullName(dto.getCreatedBy()));
+        dto.setLastModifiedByFullName(getFullName(dto.getLastModifiedBy()));
+        dto.setCreateAtJalali(dateConvertor.convertGregorianToJalali(dto.getCreatedDate()));
+        dto.setLastModifiedAtJalali(dateConvertor.convertGregorianToJalali(dto.getLastModifiedDate()));
+        return dto;
     }
     public CustomerDto createCustomer(CustomerDto customerDto) {
         Customer customerByName = customerRepository.findCustomerByName(customerDto.getName());
@@ -235,7 +246,7 @@ public class CustomerService {
         boolean result = customerRepository.existsById(customerId);
         if (result){
             if (customerRepository.hasAssociatedLetter(customerId)) {
-                throw new IllegalStateException("اشکال! این مشتری دارای نامه مرتبط می‌باشد و نمی‌تواند حذف شود.");
+                throw new DatabaseIntegrityViolationException("اشکال! این مشتری دارای نامه مرتبط می‌باشد و نمی‌تواند حذف شود.");
             }
             customerRepository.deleteById(customerId);
             return  "مشتری با موفقیت حذف شد." ;

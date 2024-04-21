@@ -3,10 +3,7 @@ package com.pishgaman.phonebook.services;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.pishgaman.phonebook.dtos.InsuranceSlipDto;
-import com.pishgaman.phonebook.dtos.LetterDto;
-import com.pishgaman.phonebook.dtos.ShareholderDto;
-import com.pishgaman.phonebook.dtos.TaxPaymentSlipDto;
+import com.pishgaman.phonebook.dtos.*;
 import com.pishgaman.phonebook.entities.*;
 import com.pishgaman.phonebook.repositories.*;
 import jakarta.annotation.PostConstruct;
@@ -35,6 +32,7 @@ public class DatabaseInitializer {
     private final InsuranceSlipRepository insuranceSlipRepository;
     private final TaxPaymentSlipRepository taxPaymentSlipRepository;
     private final ShareholderRepository shareholderRepository;
+    private final BoardMemberRepository boardMemberRepository;
 
     @PostConstruct
     public void init() throws IOException {
@@ -46,7 +44,7 @@ public class DatabaseInitializer {
             String jsonData = new String(Files.readAllBytes(Paths.get(resource.getURI())));
             List<Customer> customers = mapper.readValue(jsonData, new TypeReference<>() {
             });
-            customerRepository.saveAll(customers);
+//            customerRepository.saveAll(customers);
         }
 
         if (personRepository.count() == 0) {
@@ -62,7 +60,7 @@ public class DatabaseInitializer {
             String companyJsonData = new String(Files.readAllBytes(Paths.get(companyResource.getURI())));
             List<Company> companies = mapper.readValue(companyJsonData, new TypeReference<>() {
             });
-            companyRepository.saveAll(companies);
+//            companyRepository.saveAll(companies);
         }
 
         if (senderRepository.count() == 0) {
@@ -70,7 +68,7 @@ public class DatabaseInitializer {
             String senderJsonData = new String(Files.readAllBytes(Paths.get(senderResource.getURI())));
             List<Sender> senders = mapper.readValue(senderJsonData, new TypeReference<>() {
             });
-            senderRepository.saveAll(senders);
+//            senderRepository.saveAll(senders);
         }
 
         if (yearRepository.count() == 0) {
@@ -116,7 +114,7 @@ public class DatabaseInitializer {
                 letter.setCreationDate(letterDto.getCreationDate());
                 letter.setLetterNumber(letterDto.getLetterNumber());
                 letter.setLetterState(letterDto.getLetterState());
-                letterRepository.save(letter);
+//                letterRepository.save(letter);
             }
         }
         if (insuranceSlipRepository.count() == 0) {
@@ -141,7 +139,7 @@ public class DatabaseInitializer {
                 insuranceSlip.setStartDate(slipDto.getStartDate());
                 insuranceSlip.setEndDate(slipDto.getEndDate());
                 insuranceSlip.setSlipNumber(slipDto.getSlipNumber());
-                insuranceSlipRepository.save(insuranceSlip);
+//                insuranceSlipRepository.save(insuranceSlip);
             }
         }
         if (taxPaymentSlipRepository.count() == 0) {
@@ -167,7 +165,7 @@ public class DatabaseInitializer {
                 taxPaymentSlip.setAmount(taxPaymentSlipDto.getAmount());
                 taxPaymentSlip.setPeriod(taxPaymentSlipDto.getPeriod());
                 taxPaymentSlip.setSlipNumber(taxPaymentSlipDto.getSlipNumber());
-                taxPaymentSlipRepository.save(taxPaymentSlip);
+//                taxPaymentSlipRepository.save(taxPaymentSlip);
             }
         }
         if (shareholderRepository.count() == 0) {
@@ -194,9 +192,31 @@ public class DatabaseInitializer {
                 shareholder.setCompany(companyRepository.findById(shareholderDto.getCompanyId()).orElse(null));
                 shareholder.setScannedShareCertificate(shareholderDto.getScannedShareCertificate());
                 shareholder.setFileExtension(shareholderDto.getFileExtension());
-                shareholderRepository.save(shareholder);
+//                shareholderRepository.save(shareholder);
             }
         }
+        if (boardMemberRepository.count() == 0) {
+            ClassPathResource resource = new ClassPathResource("board_member.json");
 
+            String jsonData = new String(Files.readAllBytes(Paths.get(resource.getURI())));
+
+            List<Map<String, Object>> boardMemberMaps = mapper.readValue(jsonData, new TypeReference<>() {
+            });
+
+            List<BoardMemberDto> boardMemberDtoList = new ArrayList<>();
+            for (Map<String, Object> boardMemberMap : boardMemberMaps) {
+                BoardMemberDto boardMemberDto = mapper.convertValue(boardMemberMap, BoardMemberDto.class);
+                boardMemberDtoList.add(boardMemberDto);
+            }
+            for (BoardMemberDto boardMemberDto : boardMemberDtoList) {
+                BoardMember boardMember = new BoardMember();
+                boardMember.setId(boardMemberDto.getId());
+                boardMember.setPerson(personRepository.findById(boardMemberDto.getPersonId()).orElse(null));
+                boardMember.setCompany(companyRepository.findById(boardMemberDto.getCompanyId()).orElse(null));
+                boardMember.setPosition(positionRepository.findById(boardMemberDto.getPositionId()).orElse(null));
+//                boardMemberRepository.save(boardMember);
+            }
+
+        }
     }
 }

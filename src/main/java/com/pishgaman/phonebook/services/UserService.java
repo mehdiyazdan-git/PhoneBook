@@ -4,7 +4,6 @@ package com.pishgaman.phonebook.services;
 import com.pishgaman.phonebook.dtos.UserDetailDto;
 import com.pishgaman.phonebook.exceptions.AuditionDataIntegrityViolationException;
 import com.pishgaman.phonebook.mappers.UserDetailMapper;
-import com.pishgaman.phonebook.repositories.ProductRepository;
 import com.pishgaman.phonebook.searchforms.UserSearch;
 import com.pishgaman.phonebook.security.config.JwtService;
 import com.pishgaman.phonebook.security.token.Token;
@@ -13,6 +12,7 @@ import com.pishgaman.phonebook.security.token.TokenType;
 import com.pishgaman.phonebook.security.user.User;
 import com.pishgaman.phonebook.security.user.UserRepository;
 import com.pishgaman.phonebook.specifications.UserSpecification;
+import com.pishgaman.phonebook.utils.DateConvertor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -30,12 +30,16 @@ import java.util.Objects;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final ProductRepository productRepository;
     private final UserDetailMapper userDetailMapper;
     private final TokenRepository tokenRepository;
     private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
+    private final DateConvertor dateConvertor;
 
+    private String getFullName(Integer userId) {
+        if (userId == null) return "نامشخص";
+        return userRepository.findById(userId).map(user -> user.getFirstname() + " " + user.getLastname()).orElse("");
+    }
 
     public Page<UserDetailDto> findAll(UserSearch search, int page, int size, String sortBy, String order) {
         Sort sort = Sort.by(Sort.Direction.fromString(order), Objects.equals(sortBy, "fullName") ? "firstname" : sortBy);
@@ -48,7 +52,12 @@ public class UserService {
     public UserDetailDto findById(Integer id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
-        return userDetailMapper.toDto(user);
+        UserDetailDto dto = userDetailMapper.toDto(user);
+        dto.setCreateByFullName(getFullName(dto.getCreatedBy()));
+        dto.setLastModifiedByFullName(getFullName(dto.getLastModifiedBy()));
+        dto.setCreateAtJalali(dateConvertor.convertGregorianToJalali(dto.getCreatedDate()));
+        dto.setLastModifiedAtJalali(dateConvertor.convertGregorianToJalali(dto.getLastModifiedDate()));
+        return dto;
     }
 
     public UserDetailDto createUser(UserDetailDto request) {
@@ -106,15 +115,9 @@ public class UserService {
     public void deleteUser(Integer id) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
-        if (isUserReferencedElsewhere(user)) {
-            throw new AuditionDataIntegrityViolationException("User cannot be deleted because it has associated entities");
-        }
 
         userRepository.deleteById(id);
     }
 
-    private boolean isUserReferencedElsewhere(User user) {
-        return productRepository.existsByCreatedByOrLastModifiedBy(user.getId(), user.getId());
-    }
 
 }

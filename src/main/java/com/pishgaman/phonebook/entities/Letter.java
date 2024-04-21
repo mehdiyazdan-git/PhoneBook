@@ -13,7 +13,7 @@ import java.util.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class Letter {
+public class Letter  extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -29,7 +29,7 @@ public class Letter {
     @JoinColumn(name = "letter_type_id")
     private LetterType letterType;
 
-    @Column(name = "letter_number", unique = true)
+    @Column(name = "letter_number")
     private String letterNumber;
 
     @ManyToOne

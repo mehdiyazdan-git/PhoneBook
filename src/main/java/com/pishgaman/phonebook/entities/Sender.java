@@ -11,7 +11,7 @@ import java.util.Objects;
     @ToString
     @RequiredArgsConstructor
     @Entity
-    public class Sender {
+    public class Sender  extends BaseEntity {
 
         @Id
         @GeneratedValue(strategy = GenerationType.IDENTITY)
