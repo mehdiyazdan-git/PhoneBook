@@ -1,10 +1,6 @@
 package com.pishgaman.phonebook.entities;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -21,5 +17,10 @@ public class AppSettings  extends BaseEntity {
     private Long id;
 
     private long maxUploadFileSize;
+
+    private String vsphereUrl;
+    private String vsphereUsername;
+    @Column(length = 2048) // For encrypted password storage if needed
+    private String vspherePassword;
 }
 
