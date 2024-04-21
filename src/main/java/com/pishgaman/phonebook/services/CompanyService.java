@@ -348,7 +348,7 @@ public class CompanyService {
                 throw new DatabaseIntegrityViolationException("امکان حذف شرکت وجود ندارد. ابتدا همه سندهای این شرکت را حذف کنید.");
             }
             if (boardMemberRepository.existsByPersonId(companyId)){
-                throw new DatabaseIntegrityViolationException("امکان حذف شرکت وجود ندارد. ابتدا همه سمت های این شرکت را حذف کنید.");
+                throw new DatabaseIntegrityViolationException("امکان حذف شرکت وجود ندارد. ابتدا همه اعضای هیئت مدیره این شرکت را حذف کنید.");
             }
             if (shareholderRepository.existsByPersonId(companyId)){
                 throw new DatabaseIntegrityViolationException("امکان حذف شرکت وجود ندارد. ابتدا همه سهامدارهای این شرکت را حذف کنید.");
