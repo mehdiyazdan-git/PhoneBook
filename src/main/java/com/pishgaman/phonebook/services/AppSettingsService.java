@@ -1,5 +1,6 @@
 package com.pishgaman.phonebook.services;
 
+import com.pishgaman.phonebook.dtos.BackupDto;
 import com.pishgaman.phonebook.entities.AppSettings;
 import com.pishgaman.phonebook.repositories.AppSettingsRepository;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +31,20 @@ public class AppSettingsService {
         appSettings.setVsphereUrl(url);
         appSettings.setVsphereUsername(username);
         appSettings.setVspherePassword(password);
+        return appSettingsRepository.save(appSettings);
+    }
+
+    @Transactional(readOnly = true)
+    public BackupDto getBackupSettings() {
+        AppSettings appSettings = getAppSettings().orElseThrow(() -> new RuntimeException("App settings not found"));
+        return new BackupDto(appSettings.getBackupPath(), appSettings.getDatabaseName());
+    }
+
+    @Transactional
+    public AppSettings updateBackupSettings(BackupDto backupDto) {
+        AppSettings appSettings = getAppSettings().orElseThrow(() -> new RuntimeException("App settings not found"));
+        appSettings.setBackupPath(backupDto.getBackupPath());
+        appSettings.setDatabaseName(backupDto.getDatabaseName());
         return appSettingsRepository.save(appSettings);
     }
 }

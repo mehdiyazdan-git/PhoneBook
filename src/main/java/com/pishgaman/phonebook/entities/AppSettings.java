@@ -20,7 +20,13 @@ public class AppSettings  extends BaseEntity {
 
     private String vsphereUrl;
     private String vsphereUsername;
-    @Column(length = 2048) // For encrypted password storage if needed
+    @Column(length = 2048)
     private String vspherePassword;
+
+    @Column(name = "backup_path", length = 1024)
+    private String backupPath;
+
+    @Column(name = "database_name")
+    private String databaseName;
 }
 
