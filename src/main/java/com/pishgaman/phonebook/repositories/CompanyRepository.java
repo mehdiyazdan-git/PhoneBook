@@ -27,4 +27,7 @@ public interface CompanyRepository extends JpaRepository<Company, Long>, JpaSpec
     @Modifying
     @Query(value = "UPDATE public.company SET letter_counter = :count WHERE id = :companyId",nativeQuery = true)
     void incrementLetterCountByOne(Integer count,Long companyId);
+
+    @Query("select (count(c) > 0) from Company c where c.createdBy = :createdBy or c.lastModifiedBy = :lastModifiedBy")
+    boolean existsByCreatedByOrLastModifiedBy(@Param("createdBy") int createdBy, @Param("lastModifiedBy") int lastModifiedBy);
 }

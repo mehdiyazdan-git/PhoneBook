@@ -41,9 +41,9 @@ public class TaxPaymentSlipController {
         }
     }
 
-    @GetMapping("/export")
-    public ResponseEntity<byte[]> exportTaxPaymentSlipsToExcel() throws IOException {
-        byte[] excelData = taxPaymentSlipService.exportToExcelFile();
+    @GetMapping("/export/{companyId}")
+    public ResponseEntity<byte[]> exportTaxPaymentSlipsToExcel(@PathVariable("companyId") Long companyId) throws IOException {
+        byte[] excelData = taxPaymentSlipService.exportToExcelFile(companyId);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         headers.setContentDisposition(ContentDisposition.attachment()

@@ -22,6 +22,9 @@ import java.util.List;
 @Repository
 public interface LetterRepository extends JpaRepository<Letter, Long> {
 
+    @Query("select (count(l) > 0) from Letter l where l.createdBy = :createdBy or l.lastModifiedBy = :lastModifiedBy")
+    boolean existsByCreatedByOrLastModifiedBy(@Param("createdBy") int createdBy, @Param("lastModifiedBy") int lastModifiedBy);
+
     @Query("select (count(l) > 0) from Letter l where l.year.id = :year_id")
     boolean existsByYearId(@Param("year_id") Long year_id);
 

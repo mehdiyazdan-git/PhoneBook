@@ -41,9 +41,9 @@ public class InsuranceSlipController {
         }
     }
 
-    @GetMapping("/export")
-    public ResponseEntity<byte[]> exportInsuranceSlipsToExcel() throws IOException {
-        byte[] excelData = insuranceSlipService.exportToExcelFile();
+    @GetMapping("/export/{companyId}")
+    public ResponseEntity<byte[]> exportInsuranceSlipsToExcel(@PathVariable("companyId") Long companyId) throws IOException {
+        byte[] excelData = insuranceSlipService.exportToExcelFile(companyId);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         headers.setContentDisposition(ContentDisposition.attachment()

@@ -12,6 +12,9 @@ import java.util.List;
 @Repository
 public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSpecificationExecutor<Customer> {
 
+    @Query("select (count(c) > 0) from Customer c where c.createdBy = :createdBy or c.lastModifiedBy = :lastModifiedBy")
+    boolean existsByCreatedByOrLastModifiedBy(@Param("createdBy") int createdBy, @Param("lastModifiedBy") int lastModifiedBy);
+
 //    @Query("select c from customer c where c.name = :name")
     Customer findCustomerByName(@Param("name") String name);
 
@@ -23,4 +26,6 @@ public interface CustomerRepository extends JpaRepository<Customer, Long>, JpaSp
     List<Customer> findCustomerByNameContains(@Param("customerName") String customerName);
     @Query(value = "select count(l.id) > 0 from letter l where customer_id = :customerId", nativeQuery = true)
     boolean hasAssociatedLetter(Long customerId);
+
+
 }

@@ -87,19 +87,6 @@ public class SenderService {
         }
         return "خطا در حذف فرستنده.";
     }
-    public String getLetterPrefixById(Long senderId) {
-        Sender sender = findSenderById(senderId);
-        return sender.getLetterPrefix();
-    }
-    public int getLetterCounterById(Long senderId) {
-       return senderRepository.getMaxLetterCountBySenderId(senderId);
-    }
-    public void incrementLetterCountByOne(Integer count,Long senderId) {
-        senderRepository.incrementLetterCountByOne(count,senderId);
-    }
-    public boolean existById(Long id){
-       return !senderRepository.existsById(id);
-    }
 
 
 

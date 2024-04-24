@@ -61,8 +61,12 @@ public class TaxPaymentSlipService {
         return ExcelTemplateGenerator.generateTemplateExcel(TaxPaymentSlipDto.class);
     }
 
-    public byte[] exportToExcelFile() throws IOException {
-        List<TaxPaymentSlipDto> taxPaymentSlipDtoList = taxPaymentSlipRepository.findAll().stream().map(taxPaymentSlipMapper::toDto).collect(Collectors.toList());
+    public byte[] exportToExcelFile(Long companyId) throws IOException {
+        List<TaxPaymentSlipDto> taxPaymentSlipDtoList = taxPaymentSlipRepository
+                .findAllByCompanyId(companyId)
+                .stream()
+                .map(taxPaymentSlipMapper::toDto)
+                .collect(Collectors.toList());
         return ExcelDataExporter.exportData(taxPaymentSlipDtoList, TaxPaymentSlipDto.class);
     }
 

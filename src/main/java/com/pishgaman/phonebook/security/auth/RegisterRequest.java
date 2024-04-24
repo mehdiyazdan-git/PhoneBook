@@ -20,4 +20,8 @@ public class RegisterRequest {
   private String phoneNumber;
   private String password;
   private Role role;
+  private boolean accountNonExpired;
+  private boolean credentialsNonExpired;
+  private boolean accountNonLocked;
+  private boolean enabled;
 }

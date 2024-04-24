@@ -54,8 +54,9 @@ public class InsuranceSlipService {
         return insuranceSlips.size() + " insurance slips successfully imported.";
     }
 
-    public byte[] exportToExcelFile() throws IOException {
-        List<InsuranceSlipDto> insuranceSlipDtoList = insuranceSlipRepository.findAll().stream().map(insuranceSlipMapper::toDto).collect(Collectors.toList());
+    public byte[] exportToExcelFile(Long companyId) throws IOException {
+        List<InsuranceSlipDto> insuranceSlipDtoList = insuranceSlipRepository
+                .findAllByCompanyId(companyId).stream().map(insuranceSlipMapper::toDto).collect(Collectors.toList());
         return ExcelDataExporter.exportData(insuranceSlipDtoList, InsuranceSlipDto.class);
     }
     public String importInsuranceSlipsFromExcel(MultipartFile file) throws IOException {

@@ -26,4 +26,7 @@ public interface SenderRepository extends JpaRepository<Sender, Long> {
     @Modifying
     @Query(value = "UPDATE public.sender SET letter_counter = :count WHERE id = :senderId",nativeQuery = true)
     void incrementLetterCountByOne(Integer count,Long senderId);
+
+    @Query("select (count(s) > 0) from Sender s where s.createdBy = :createdBy or s.lastModifiedBy = :lastModifiedBy")
+    boolean existsByCreatedByOrLastModifiedBy(@Param("createdBy") int createdBy, @Param("lastModifiedBy") int lastModifiedBy);
 }

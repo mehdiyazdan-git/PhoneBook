@@ -25,6 +25,10 @@ public class PhoneBookApplication {
                     .email("r.kasra@gmail.com")
                     .password("123456")
                     .role(ADMIN)
+                    .accountNonExpired(true)
+                    .accountNonLocked(true)
+                    .credentialsNonExpired(true)
+                    .enabled(true)
                     .build();
 
 

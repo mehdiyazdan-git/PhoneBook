@@ -34,7 +34,10 @@ public interface BoardMemberRepository extends JpaRepository<BoardMember, Long>,
             where b.person.id = :personId and b.company.id = :companyId and b.position.id = :positionId and b.id <> :boardMemberId""")
     BoardMember findByPersonIdAndCompanyIdAndPositionIdAndNotBoardMemberId(@Param("personId") Long personId, @Param("companyId") Long companyId, @Param("positionId") Long positionId, @Param("boardMemberId") Long boardMemberId);
 
-
+    @Query("""
+            select (count(b) > 0) from BoardMember b
+            where b.createdBy = :createdBy or b.lastModifiedBy = :lastModifiedBy""")
+    boolean existsByCreatedByOrLastModifiedBy(@Param("createdBy") int createdBy, @Param("lastModifiedBy") int lastModifiedBy);
 
     @Query("select (count(b) > 0) from BoardMember b where b.company.id = :companyId")
     boolean existsByCompanyId(@Param("companyId") Long companyId);

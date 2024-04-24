@@ -54,8 +54,12 @@ public class ShareHolderService {
     }
 
 
-    public byte[] exportToExcelFile() throws IOException {
-        List<ShareholderDto> shareholderDtoList = shareHolderRepository.findAll().stream().map(shareHolderMapper::toDto).collect(Collectors.toList());
+    public byte[] exportToExcelFile(Long companyId) throws IOException {
+        List<ShareholderDto> shareholderDtoList = shareHolderRepository
+                .findAllByCompanyId(companyId)
+                .stream()
+                .map(shareHolderMapper::toDto)
+                .collect(Collectors.toList());
         return ExcelDataExporter.exportData(shareholderDtoList, ShareholderDto.class);
     }
 

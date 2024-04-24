@@ -1,11 +1,13 @@
 package com.pishgaman.phonebook.controllers;
 
-import com.pishgaman.phonebook.dtos.BackupDto;
-import com.pishgaman.phonebook.services.AppSettingsService;
 import com.pishgaman.phonebook.services.DatabaseService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 
 @CrossOrigin
 @RestController
@@ -14,56 +16,46 @@ import org.springframework.web.bind.annotation.*;
 public class DatabaseController {
 
     private final DatabaseService databaseService;
-    private final AppSettingsService appSettingsService;
 
     @GetMapping("/database-size")
     public String getDatabaseSize() {
         return databaseService.getDatabaseSize();
     }
 
-    @GetMapping("/backup/{dbName}")
-    public String backupDatabase(@PathVariable String dbName) {
-        String backupDirectory = "/var/backups/myapp"; // Typically for Linux/Unix systems
+    @GetMapping("/backup")
+    public ResponseEntity<?> backupDatabase() {
         try {
-            databaseService.performBackup(dbName, backupDirectory);
-            return "Backup successful!";
+            databaseService.performBackup();
+            return ResponseEntity.status(HttpStatus.OK).body("فایل پشتیبان با موفقیت ایجاد شد.");
         } catch (Exception e) {
             e.printStackTrace();
-            return "Backup failed: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("خطا در ایجاد فایل پشتیبان: " + e.getMessage());
         }
     }
 
-    @GetMapping("/backup-windows/{dbName}")
-    public String backupDatabaseInWindows(@PathVariable String dbName) {
-        String backupDirectory = "C:\\Backups\\MyApp"; // Windows-specific directory path
+    @GetMapping("/backup-files")
+    public ResponseEntity<?> getBackupFiles() {
         try {
-            databaseService.performBackupInWindowsOs(dbName, backupDirectory);
-            return "Backup successful!";
-        } catch (Exception e) {
+            return ResponseEntity.ok(databaseService.getBackupFilesList());
+        } catch (IOException e) {
             e.printStackTrace();
-            return "Backup failed: " + e.getMessage();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("خطا در بازیابی فهرست فایل‌های پشتیبان: " + e.getMessage());
         }
     }
 
-    @GetMapping("/settings/backup")
-    public ResponseEntity<BackupDto> getBackupSettings() {
+    @DeleteMapping("/backup-files")
+    public ResponseEntity<String> deleteBackup(@RequestParam String filePath) {
         try {
-            BackupDto backupSettings = appSettingsService.getBackupSettings();
-            return ResponseEntity.ok(backupSettings);
+            filePath = java.net.URLDecoder.decode(filePath, StandardCharsets.UTF_8);
+            databaseService.removeBackup(filePath);
+            return ResponseEntity.ok("فایل پشتیبان حذف شد.");
         } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().body(null);
+            System.err.println("Error deleting backup file: " + e.getMessage());
+
+            // Return an error response with a more informative message
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("خطا در حذف فایل پشتیبان: " + e.getMessage());
         }
     }
 
-    @PutMapping("/settings/backup")
-    public ResponseEntity<String> updateBackupSettings(@RequestBody BackupDto backupDto) {
-        try {
-            appSettingsService.updateBackupSettings(backupDto);
-            return ResponseEntity.ok("Backup settings updated successfully!");
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().body("Failed to update backup settings: " + e.getMessage());
-        }
-    }
 }

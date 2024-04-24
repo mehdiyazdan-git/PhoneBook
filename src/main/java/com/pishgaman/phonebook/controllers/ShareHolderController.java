@@ -41,9 +41,9 @@ public class ShareHolderController {
         }
     }
 
-    @GetMapping("/export")
-    public ResponseEntity<byte[]> exportShareHoldersToExcel() throws IOException {
-        byte[] excelData = shareHolderService.exportToExcelFile();
+    @GetMapping("/export/{companyId}")
+    public ResponseEntity<byte[]> exportShareHoldersToExcel(@PathVariable("companyId") Long companyId) throws IOException {
+        byte[] excelData = shareHolderService.exportToExcelFile(companyId);
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
         headers.setContentDisposition(ContentDisposition.attachment()

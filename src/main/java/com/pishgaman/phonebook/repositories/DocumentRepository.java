@@ -11,6 +11,9 @@ import java.util.List;
 @Repository
 public interface DocumentRepository extends JpaRepository<Document, Long> {
 
+    @Query("select (count(d) > 0) from Document d where d.createdBy = :createdBy or d.lastModifiedBy = :lastModifiedBy")
+    boolean existsByCreatedByOrLastModifiedBy(@Param("createdBy") int createdBy, @Param("lastModifiedBy") int lastModifiedBy);
+
     @Query("""
             select d.id, d.documentName,d.documentType,d.fileExtension from Document d
             where d.person.id = :personId""")

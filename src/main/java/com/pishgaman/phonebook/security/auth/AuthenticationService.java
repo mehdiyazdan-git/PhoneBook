@@ -34,6 +34,10 @@ public class AuthenticationService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(request.getRole())
+                .accountNonExpired(request.isAccountNonExpired())
+                .accountNonLocked(request.isAccountNonLocked())
+                .credentialsNonExpired(request.isCredentialsNonExpired())
+                .enabled(request.isEnabled())
                 .build();
 
         var savedUser = userRepository.save(user);

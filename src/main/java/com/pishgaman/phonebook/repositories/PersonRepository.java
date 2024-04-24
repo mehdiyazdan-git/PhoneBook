@@ -23,5 +23,8 @@ public interface PersonRepository extends JpaRepository<Person, Long>, JpaSpecif
     @Query("select p from Person p where p.nationalId = :nationalId")
     Optional<Person> findPersonByNationalId(@Param("nationalId") String nationalId);
 
+    @Query("select (count(p) > 0) from Person p where p.createdBy = :createdBy or p.lastModifiedBy = :lastModifiedBy")
+    boolean existsByCreatedByOrLastModifiedBy(@Param("createdBy") int createdBy, @Param("lastModifiedBy") int lastModifiedBy);
+
 
 }

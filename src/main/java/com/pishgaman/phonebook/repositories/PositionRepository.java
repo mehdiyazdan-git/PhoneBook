@@ -17,4 +17,7 @@ public interface PositionRepository extends JpaRepository<Position, Long>, JpaSp
 
     @Query("select p from Position p where p.name like concat('%', :name, '%')")
     List<Position> findAllByNameContaining(@Param("name") String name);
+
+    @Query("select (count(p) > 0) from Position p where p.createdBy = :createdBy or p.lastModifiedBy = :lastModifiedBy")
+    boolean existsByCreatedByOrLastModifiedBy(@Param("createdBy") int createdBy, @Param("lastModifiedBy") int lastModifiedBy);
 }

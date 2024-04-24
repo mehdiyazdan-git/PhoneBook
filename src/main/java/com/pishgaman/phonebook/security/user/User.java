@@ -35,10 +35,17 @@ public class User implements UserDetails {
   @Enumerated(EnumType.STRING)
   private Role role;
 
+  private boolean accountNonExpired;
+  private boolean credentialsNonExpired;
+  private boolean accountNonLocked;
+  private boolean enabled;
+
 
   @OneToMany(mappedBy = "user", cascade = CascadeType.REMOVE)
   @ToString.Exclude
   private List<Token> tokens;;
+
+
 
   @Override
   public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -57,22 +64,22 @@ public class User implements UserDetails {
 
   @Override
   public boolean isAccountNonExpired() {
-    return true;
+    return this.accountNonExpired;
   }
 
   @Override
   public boolean isAccountNonLocked() {
-    return true;
+    return this.accountNonLocked;
   }
 
   @Override
   public boolean isCredentialsNonExpired() {
-    return true;
+    return this.credentialsNonExpired;
   }
 
   @Override
   public boolean isEnabled() {
-    return true;
+    return this.enabled;
   }
 
   @Override

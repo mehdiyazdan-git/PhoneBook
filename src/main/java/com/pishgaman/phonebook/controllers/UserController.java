@@ -43,6 +43,7 @@ public class UserController {
     }
 
     @PostMapping(path = {"/", ""})
+    @PreAuthorize("hasAuthority('admin:create')")
     public ResponseEntity<?> createUser(@RequestBody UserDetailDto userDto) {
         try {
             UserDetailDto createdUser = userService.createUser(userDto);
@@ -53,6 +54,7 @@ public class UserController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAuthority('admin:update')")
     public ResponseEntity<?> updateUser(@PathVariable Integer id, @RequestBody UserDetailDto userDto) {
         try {
             UserDetailDto updatedUser = userService.updateUser(id, userDto);
