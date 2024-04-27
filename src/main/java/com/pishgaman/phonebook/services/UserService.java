@@ -2,14 +2,12 @@ package com.pishgaman.phonebook.services;
 
 
 import com.pishgaman.phonebook.dtos.UserDetailDto;
-import com.pishgaman.phonebook.exceptions.AuditionDataIntegrityViolationException;
 import com.pishgaman.phonebook.exceptions.DatabaseIntegrityViolationException;
 import com.pishgaman.phonebook.mappers.UserDetailMapper;
 import com.pishgaman.phonebook.repositories.*;
 import com.pishgaman.phonebook.searchforms.UserSearch;
 import com.pishgaman.phonebook.security.config.JwtService;
 import com.pishgaman.phonebook.security.token.Token;
-import com.pishgaman.phonebook.security.token.TokenDto;
 import com.pishgaman.phonebook.security.token.TokenRepository;
 import com.pishgaman.phonebook.security.token.TokenType;
 import com.pishgaman.phonebook.security.user.User;
@@ -17,26 +15,26 @@ import com.pishgaman.phonebook.security.user.UserRepository;
 import com.pishgaman.phonebook.specifications.UserSpecification;
 import com.pishgaman.phonebook.utils.DateConvertor;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
 public class UserService {
+
+    private static final Logger logger = LoggerFactory.getLogger(User.class);
 
     private final UserRepository userRepository;
     private final UserDetailMapper userDetailMapper;
@@ -86,9 +84,6 @@ public class UserService {
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(request.getRole())
-                .accountNonExpired(request.isAccountNonExpired())
-                .accountNonLocked(request.isAccountNonLocked())
-                .credentialsNonExpired(request.isCredentialsNonExpired())
                 .enabled(request.isEnabled())
                 .build();
 
@@ -116,9 +111,8 @@ public class UserService {
     public UserDetailDto updateUser(Integer id, UserDetailDto userDetailDto) {
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
-        if (userRepository.findUserByUsernameAndIdNot(userDetailDto.getUsername(), id) != null) {
-            throw new DataIntegrityViolationException("این نام کاربری قبلا ثبت شده است");
-        }
+
+
         user.setId( userDetailDto.getId() );
         user.setFirstname( userDetailDto.getFirstname() );
         user.setLastname( userDetailDto.getLastname() );
@@ -126,20 +120,22 @@ public class UserService {
         user.setEmail( userDetailDto.getEmail() );
         user.setRole( userDetailDto.getRole() );
 
-        if (userDetailDto.getPassword() != null) {
-            user.setPassword(passwordEncoder.encode(userDetailDto.getPassword()));
+        if (userDetailDto.getPassword() != null && !userDetailDto.getPassword().isEmpty()) {
+            if (!passwordEncoder.matches(userDetailDto.getPassword(), user.getPassword())) {
+                logger.info("Password is changed");
+                user.setPassword(passwordEncoder.encode(userDetailDto.getPassword()));
+            } else {
+                logger.info("Password is not changed");
+            }
+        }
+
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         User userByUsername = findUserByUsername((UserDetails) authentication.getPrincipal());
 
         Integer currentUserId = userByUsername.getId();
         if (!id.equals(currentUserId)) {
-            user.setAccountNonExpired( userDetailDto.isAccountNonExpired() );
-            user.setCredentialsNonExpired( userDetailDto.isCredentialsNonExpired() );
-            user.setAccountNonLocked( userDetailDto.isAccountNonLocked() );
             user.setEnabled( userDetailDto.isEnabled() );
-        }
-
         }
         User saved = userRepository.save(user);
         return userDetailMapper.toDto(saved);
@@ -147,6 +143,19 @@ public class UserService {
     public User findUserByUsername(UserDetails userDetails) {
         return userRepository.findByUsername(userDetails.getUsername())
                 .orElseThrow(() -> new RuntimeException("User not found with username: " + userDetails.getUsername()));
+    }
+
+    public void resetPassword(Integer userId, String newPassword) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        // Encode the new password
+        String encodedPassword = passwordEncoder.encode(newPassword);
+        user.setPassword(encodedPassword);
+
+        // Save the updated user
+        userRepository.save(user);
+        logger.info("Password for user id {} has been successfully reset.", userId);
     }
 
     public String deleteUser(Integer id) {

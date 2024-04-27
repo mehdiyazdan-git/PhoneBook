@@ -9,3 +9,5 @@ export VMWARE_VSPHERE_PASSWORD="Srv@1234"
 
 
 
+
+

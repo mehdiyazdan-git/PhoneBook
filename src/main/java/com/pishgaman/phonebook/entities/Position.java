@@ -21,6 +21,11 @@ public class Position  extends BaseEntity {
     private Long id;
     private String name;
 
+    public Position(Long id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
     @OneToMany(mappedBy = "position", orphanRemoval = true)
     private Set<BoardMember> boardMembers = new LinkedHashSet<>();
 

@@ -8,6 +8,7 @@ import com.pishgaman.phonebook.mappers.AttachmentMapper;
 import com.pishgaman.phonebook.repositories.LetterRepository;
 import com.pishgaman.phonebook.services.AttachmentService;
 import jakarta.persistence.EntityNotFoundException;
+import jakarta.validation.constraints.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -45,7 +46,7 @@ public class AttachmentController {
 
     @PostMapping("/upload")
     public ResponseEntity<?> uploadToDB(@RequestParam("letterId") Long letterId,
-                                        @org.jetbrains.annotations.NotNull @RequestParam("file") MultipartFile[] files) {
+                                        @NotNull @RequestParam("file") MultipartFile[] files) {
         // Iterate through each file
         for (MultipartFile file : files) {
             Attachment attachment = new Attachment();

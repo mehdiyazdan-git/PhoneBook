@@ -76,21 +76,21 @@ public class DatabaseInitializer {
             String yearJsonData = new String(Files.readAllBytes(Paths.get(yearResource.getURI())));
             List<Year> years = mapper.readValue(yearJsonData, new TypeReference<>() {
             });
-            yearRepository.saveAll(years);
+//            yearRepository.saveAll(years);
         }
         if (positionRepository.count() == 0) {
             ClassPathResource positionResource = new ClassPathResource("position.json");
             String positionJsonData = new String(Files.readAllBytes(Paths.get(positionResource.getURI())));
             List<Position> positions = mapper.readValue(positionJsonData, new TypeReference<>() {
             });
-            positionRepository.saveAll(positions);
+//            positionRepository.saveAll(positions);
         }
         if (letterTypeRepository.count() == 0) {
             ClassPathResource resource = new ClassPathResource("LETTER_TYPE.JSON");
             String jsonData = new String(Files.readAllBytes(Paths.get(resource.getURI())));
             List<LetterType> letterTypes = mapper.readValue(jsonData, new TypeReference<>() {
             });
-            letterTypeRepository.saveAll(letterTypes);
+//            letterTypeRepository.saveAll(letterTypes);
         }
         if (letterRepository.count() == 0) {
             ClassPathResource letterResource = new ClassPathResource("letter.json");

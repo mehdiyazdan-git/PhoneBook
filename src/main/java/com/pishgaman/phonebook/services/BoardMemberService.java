@@ -90,10 +90,7 @@ public class BoardMemberService {
                 .map(boardMemberDetailsMapper::toDto)
                 .collect(Collectors.toList());
     }
-    public byte [] generateBoardMemberPDFByPersonId(Long personId) throws IllegalAccessException, IOException {
-        List<BoardMemberPDFDto> boardMemberDetailsDtos = findAllByPersonIdForPDFGeneration(personId);
-        return PDFDataExporter.exportData(boardMemberDetailsDtos, BoardMemberPDFDto.class);
-    }
+
     public List<BoardMemberPDFDto> getBoardMemberPDFByPersonId1(Long personId) throws IllegalAccessException {
         return findAllByPersonIdForPDFGeneration(personId);
     }

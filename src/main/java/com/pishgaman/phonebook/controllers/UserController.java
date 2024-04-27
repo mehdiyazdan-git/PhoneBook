@@ -17,6 +17,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Map;
+
 @CrossOrigin
 @RestController
 @RequestMapping("/api/users")
@@ -61,6 +63,21 @@ public class UserController {
             return ResponseEntity.ok(updatedUser);
         } catch (DataIntegrityViolationException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
+    }
+    @PutMapping("/{id}/reset-password")
+    @PreAuthorize("hasAuthority('admin:update')") // Adjust this according to your security requirements
+    public ResponseEntity<?> resetUserPassword(@PathVariable Integer id, @RequestBody Map<String, String> passwordWrapper) {
+        String newPassword = passwordWrapper.get("newPassword");
+        if (newPassword == null || newPassword.isBlank()) {
+            return ResponseEntity.badRequest().body("New password must not be empty");
+        }
+
+        try {
+            userService.resetPassword(id, newPassword);
+            return ResponseEntity.ok("Password has been successfully reset");
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
         }
     }
 

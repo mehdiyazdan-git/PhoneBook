@@ -24,4 +24,10 @@ public class Year extends BaseEntity {
 
     @Column(name = "starting_letter_number")
     private Long startingLetterNumber;
+
+    public Year(Long id, Long name, Long startingLetterNumber) {
+        this.id = id;
+        this.name = name;
+        this.startingLetterNumber = startingLetterNumber;
+    }
 }

@@ -26,6 +26,11 @@ public class LetterType  extends BaseEntity {
     @OneToMany(mappedBy = "letterType", orphanRemoval = true)
     private Set<Letter> letters = new LinkedHashSet<>();
 
+    public LetterType(Long id, String type) {
+        this.id = id;
+        this.type = type;
+    }
+
     @Override
     public final boolean equals(Object o) {
         if (this == o) return true;

@@ -35,9 +35,6 @@ public class User implements UserDetails {
   @Enumerated(EnumType.STRING)
   private Role role;
 
-  private boolean accountNonExpired;
-  private boolean credentialsNonExpired;
-  private boolean accountNonLocked;
   private boolean enabled;
 
 
@@ -64,17 +61,17 @@ public class User implements UserDetails {
 
   @Override
   public boolean isAccountNonExpired() {
-    return this.accountNonExpired;
+    return true;
   }
 
   @Override
   public boolean isAccountNonLocked() {
-    return this.accountNonLocked;
+    return true;
   }
 
   @Override
   public boolean isCredentialsNonExpired() {
-    return this.credentialsNonExpired;
+    return true;
   }
 
   @Override

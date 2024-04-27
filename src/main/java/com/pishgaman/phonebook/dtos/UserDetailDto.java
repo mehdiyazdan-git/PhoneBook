@@ -22,8 +22,5 @@ public class UserDetailDto  extends BaseDto  implements  Serializable {
     private String email;
     private String password;
     private Role role;
-    private boolean accountNonExpired;
-    private boolean credentialsNonExpired;
-    private boolean accountNonLocked;
     private boolean enabled;
 }

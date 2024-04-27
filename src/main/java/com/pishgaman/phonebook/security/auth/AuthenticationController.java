@@ -1,6 +1,9 @@
 package com.pishgaman.phonebook.security.auth;
 
+import com.pishgaman.phonebook.services.AppSettingsService;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -16,6 +19,7 @@ import java.time.format.DateTimeFormatter;
 public class AuthenticationController {
 
   private final AuthenticationService service;
+  private static final Logger logger = LoggerFactory.getLogger(AppSettingsService.class);
 
   @PostMapping("/register")
   public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisterRequest request) {
@@ -30,10 +34,10 @@ public class AuthenticationController {
      logAction("successful user authentication");
      return ResponseEntity.status(HttpStatus.OK).body(authenticationResponse);
     } catch (BadCredentialsException e) {
-     e.printStackTrace();
+     logger.info(e.getMessage());
       return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("نام کاربری یا کلمه عبور اشتباه است.");
     } catch (Exception e) {
-     e.printStackTrace();
+     logger.info(e.getMessage());
      return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
    }
 
