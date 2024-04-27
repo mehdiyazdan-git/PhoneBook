@@ -328,6 +328,7 @@ public class CompanyService {
         }
 
         Company companyToBeUpdate = companyMapper.partialUpdate(companyDto, companyById);
+        companyToBeUpdate.setRegistrationDate(companyDto.getRegistrationDate());
         Company updated = companyRepository.save(companyToBeUpdate);
         return companyMapper.toDto(updated);
     }

@@ -113,7 +113,7 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
 
 
-        user.setId( userDetailDto.getId() );
+        user.setId( userDetailDto.getId());
         user.setFirstname( userDetailDto.getFirstname() );
         user.setLastname( userDetailDto.getLastname() );
         user.setUsername( userDetailDto.getUsername() );
