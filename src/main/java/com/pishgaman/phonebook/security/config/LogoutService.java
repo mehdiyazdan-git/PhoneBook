@@ -1,7 +1,5 @@
 package com.pishgaman.phonebook.security.config;
 
-
-
 import com.pishgaman.phonebook.security.token.TokenRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,12 +9,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.authentication.logout.LogoutHandler;
 import org.springframework.stereotype.Service;
 
+import java.util.logging.Logger;
+
 @Service
 @RequiredArgsConstructor
 public class LogoutService implements LogoutHandler {
 
   private final TokenRepository tokenRepository;
-
+  Logger logger = Logger.getLogger(LogoutService.class.getName());
   @Override
   public void logout(
       HttpServletRequest request,
@@ -34,7 +34,9 @@ public class LogoutService implements LogoutHandler {
     if (storedToken != null) {
       storedToken.setExpired(true);
       storedToken.setRevoked(true);
+      logger.info("Token revoked");
       tokenRepository.save(storedToken);
+      logger.info("context cleared");
       SecurityContextHolder.clearContext();
     }
   }

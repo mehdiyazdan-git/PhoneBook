@@ -1,19 +1,28 @@
 package com.pishgaman.phonebook.security.auth;
 
-import com.pishgaman.phonebook.exceptions.UnauthorizedException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pishgaman.phonebook.security.config.JwtService;
 import com.pishgaman.phonebook.security.token.Token;
 import com.pishgaman.phonebook.security.token.TokenRepository;
 import com.pishgaman.phonebook.security.token.TokenType;
 import com.pishgaman.phonebook.security.user.User;
 import com.pishgaman.phonebook.security.user.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 
 
@@ -25,6 +34,8 @@ public class AuthenticationService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
+
+    private static final Logger logger = LoggerFactory.getLogger(AuthenticationService.class);
 
     public AuthenticationResponse register(RegisterRequest request) {
         var user = User.builder()
@@ -56,109 +67,72 @@ public class AuthenticationService {
      * @return An authentication response containing the access token, refresh token, username, and user role.
      */
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
-        // Authenticate the user with username and password
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
-                        request.getPassword()
-                )
-        );
-
-        // Retrieve user from the database by username, or throw exception if not found
-        var user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow();
-
-        // Retrieve all valid tokens for the authenticated user
-        var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
-
-        // Check if there are no valid tokens
-        if (validUserTokens.isEmpty()) {
-            // Generate a new JWT token for the user
+        try {
+            authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(
+                            request.getUsername(),
+                            request.getPassword()
+                    )
+            );
+            Optional<User> optionalUser = userRepository.findByUsername(request.getUsername());
+            if (optionalUser.isEmpty()) {
+                throw new UsernameNotFoundException("User not found");
+            }
+            var user = optionalUser.get();
             var jwtToken = jwtService.generateToken(user);
+            var refreshToken = jwtService.generateRefreshToken(user);
 
-            // Revoke all previous tokens for security reasons
             revokeAllUserTokens(user);
-
-            // Save the new JWT token in the database
             saveUserToken(user, jwtToken);
 
-            // Build and return a new authentication response with the new tokens and user information
             return AuthenticationResponse.builder()
                     .accessToken(jwtToken)
-                    .refreshToken(jwtService.generateRefreshToken(user))
+                    .refreshToken(refreshToken)
                     .userName(user.getUsername())
                     .role(user.getRole().name())
                     .build();
+        } catch (AuthenticationException e) {
+            logger.error("Authentication failed: {}", e.getMessage());
+            throw new BadCredentialsException("Invalid username or password");
         }
-
-        // If valid tokens exist, return the oldest valid token and a new refresh token
-        return AuthenticationResponse.builder()
-                .accessToken(validUserTokens.get(0).getToken())
-                .refreshToken(jwtService.generateRefreshToken(user))
-                .userName(user.getUsername())
-                .role(user.getRole().name())
-                .build();
     }
 
 
-    public AuthenticationResponse refreshToken(String refreshToken) {
-        if (refreshToken == null || refreshToken.isEmpty()) {
-            throw new IllegalArgumentException("Refresh token does not exist or is empty");
+    public void refreshToken(
+            HttpServletRequest request,
+            HttpServletResponse response
+    ) {
+        final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+            setResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Bearer token not found");
+            return;
         }
+        logger.info("Refresh Token API triggered");
+        String refreshToken = authHeader.substring(7);
         try {
             String username = jwtService.extractUsername(refreshToken);
-            System.out.println("extractUsername: " + username);
+            User user = this.userRepository.findByUsername(username)
+                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-            if (username == null) {
-                throw new IllegalArgumentException("Invalid refresh token format");
-            }
-            Optional<User> userOptional = userRepository.findByUsername(username);
-
-            if (userOptional.isEmpty()) {
-                throw new BadCredentialsException("نام کاربری یافت نشد");
-            }
-            User user = userOptional.get();
-
-            if (!jwtService.isTokenValid(refreshToken, user)) {
-                throw new UnauthorizedException("توکن رفرش نامعتبر است");
-            }
-            var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
-
-            if (validUserTokens.isEmpty()) {
-                System.out.println("invalid tokens");
-                revokeAllUserTokens(user);
+            if (jwtService.isTokenValid(refreshToken, user)) {
                 String accessToken = jwtService.generateToken(user);
+                revokeAllUserTokens(user);
                 saveUserToken(user, accessToken);
-
-                return AuthenticationResponse.builder()
+                AuthenticationResponse authResponse = AuthenticationResponse.builder()
                         .accessToken(accessToken)
-                        .refreshToken(jwtService.generateRefreshToken(user))
-                        .userName(user.getUsername())
+                        .refreshToken(refreshToken)
+                        .userName(username)
                         .role(user.getRole().name())
                         .build();
+                response.setContentType("application/json;charset=UTF-8");
+                new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
             }
-            return AuthenticationResponse.builder()
-                    .accessToken(validUserTokens.get(0).getToken())
-                    .refreshToken(jwtService.generateRefreshToken(user))
-                    .role(user.getRole().name())
-                    .userName(user.getUsername())
-                    .build();
         } catch (Exception e) {
-
-            e.printStackTrace();
-            return new AuthenticationResponse();
+            logger.error("Error refreshing token: {}", e.getMessage());
+            setResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to refresh token: " + e.getMessage());
         }
     }
-    public void signOut(String accessToken) {
-       try {
-           var user = userRepository.findByUsername(jwtService.extractUsername(accessToken))
-                   .orElseThrow();
-           revokeAllUserTokens(user);
-       }catch (Exception e){
-             e.printStackTrace();
-       }
 
-    };
 
     private void saveUserToken(User user, String jwtToken) {
         var token = Token.builder()
@@ -185,4 +159,16 @@ public class AuthenticationService {
     public boolean isTableEmpty() {
         return userRepository.isTableEmpty();
     }
+
+    private void setResponse(HttpServletResponse response, int status, String message) {
+        try {
+            response.setStatus(status);
+            response.setContentType("application/json;charset=UTF-8");
+            response.getWriter().write(new ObjectMapper().writeValueAsString(Map.of("error", message)));
+            response.getWriter().flush();
+        } catch (IOException e) {
+            logger.error("Failed to set HTTP response: {}", e.getMessage());
+        }
+    }
+
 }

@@ -1,11 +1,17 @@
 package com.pishgaman.phonebook.security.config;
 
+import com.pishgaman.phonebook.exceptions.*;
 import com.pishgaman.phonebook.security.token.TokenRepository;
+import com.pishgaman.phonebook.security.user.User;
+
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -16,14 +22,21 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.util.Map;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.MediaType;
 
 @Component
 @RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
+  private static final Logger logger = LoggerFactory.getLogger(User.class);
+
   private final JwtService jwtService;
   private final UserDetailsService userDetailsService;
   private final TokenRepository tokenRepository;
+  private final ObjectMapper objectMapper;
 
   @Override
   protected void doFilterInternal(
@@ -44,27 +57,49 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     }
 
     final String jwt = authHeader.substring(7);
-    final String username = jwtService.extractUsername(jwt);
 
-    if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-      UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
+    try {
+      String username = jwtService.extractUsername(jwt);
+      if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+        UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
-      boolean isTokenValid = tokenRepository.findByToken(jwt)
-              .map(token -> !token.isExpired() && !token.isRevoked())
-              .orElse(false);
+        boolean isTokenValid = tokenRepository.findByToken(jwt)
+                .map(token -> !token.isExpired() && !token.isRevoked())
+                .orElse(false);
 
-      if (jwtService.isTokenValid(jwt, userDetails) && isTokenValid) {
-        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                userDetails,
-                null,
-                userDetails.getAuthorities()
-        );
+        if (!isTokenValid) {
+          setResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "invalid token");
+          return;
+        }
 
-        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-        SecurityContextHolder.getContext().setAuthentication(authToken);
+        if (jwtService.isTokenValid(jwt, userDetails)) {
+          UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                  userDetails, null, userDetails.getAuthorities());
+          authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+          SecurityContextHolder.getContext().setAuthentication(authToken);
+        } else {
+          setResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "expired token");
+          return;
+        }
       }
+    } catch (ExpiredJwtException e) {
+      logger.error("JWT processing failed: {}", e.getMessage());
+      setResponse(response, HttpServletResponse.SC_FORBIDDEN, "expired token");
+      return;
+    } catch (Exception e) {
+      logger.error("JWT processing failed: {}", e.getMessage());
+      setResponse(response, HttpServletResponse.SC_BAD_REQUEST, "malformed token");
+      return;
     }
 
     filterChain.doFilter(request, response);
   }
+
+  private void setResponse(HttpServletResponse response, int status, String message) throws IOException {
+    response.setStatus(status);
+    response.setContentType("application/json;charset=UTF-8"); // Ensure charset is set to UTF-8
+    response.getWriter().write(objectMapper.writeValueAsString(Map.of("error", message)));
+    response.getWriter().flush();
+  }
 }
+

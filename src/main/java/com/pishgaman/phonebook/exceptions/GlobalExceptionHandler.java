@@ -1,5 +1,6 @@
 package com.pishgaman.phonebook.exceptions;
 
+import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.persistence.EntityNotFoundException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,20 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.NOT_FOUND)
                 .body(ex.getMessage());
     }
+    // handle ExpiredJwtException
+//    @ExceptionHandler(ExpiredJwtDurationException.class)
+//    public ResponseEntity<String> handleExpiredJwtDurationException(ExpiredJwtDurationException ex,  WebRequest request){
+//        return ResponseEntity
+//                .status(HttpStatus.UNAUTHORIZED)
+//                .body(ex.getMessage());
+//    }
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<String> handleExpiredJwtException(ExpiredJwtException ex,  WebRequest request){
+        return ResponseEntity
+                .status(HttpStatus.UNAUTHORIZED)
+                .body(ex.getMessage());
+    }
+
 
     // Handle IllegalArgumentException
     @ExceptionHandler(IllegalArgumentException.class)
