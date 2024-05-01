@@ -29,6 +29,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Objects;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -54,9 +55,9 @@ public class UserService {
     private final PersonRepository personRepository;
     private final LetterTypeRepository letterTypeRepository;
 
-    private String getFullName(Integer userId) {
-        if (userId == null) return "نامشخص";
-        return userRepository.findById(userId).map(user -> user.getFirstname() + " " + user.getLastname()).orElse("");
+    public String getUserFullNameByUserName(String userName) {
+        if (userName == null) return "نامشخص";
+        return userRepository.findByUsername(userName).map(user -> user.getFirstname() + " " + user.getLastname()).orElse("نامشخص");
     }
 
     public Page<UserDetailDto> findAll(UserSearch search, int page, int size, String sortBy, String order) {

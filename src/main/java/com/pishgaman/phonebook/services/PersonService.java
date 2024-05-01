@@ -5,9 +5,7 @@ import com.github.eloyzone.jalalicalendar.JalaliDate;
 import com.github.eloyzone.jalalicalendar.JalaliDateFormatter;
 import com.pishgaman.phonebook.dtos.PersonDto;
 import com.pishgaman.phonebook.dtos.PersonSelectDto;
-import com.pishgaman.phonebook.dtos.PositionDto;
 import com.pishgaman.phonebook.entities.Person;
-import com.pishgaman.phonebook.entities.Position;
 import com.pishgaman.phonebook.exceptions.DatabaseIntegrityViolationException;
 import com.pishgaman.phonebook.exceptions.DuplicateNationalIdException;
 import com.pishgaman.phonebook.mappers.PersonMapper;
@@ -18,17 +16,12 @@ import com.pishgaman.phonebook.repositories.ShareholderRepository;
 import com.pishgaman.phonebook.searchforms.PersonSearch;
 import com.pishgaman.phonebook.security.user.UserRepository;
 import com.pishgaman.phonebook.specifications.PersonSpecification;
-import com.pishgaman.phonebook.specifications.PositionSpecification;
 import com.pishgaman.phonebook.utils.DateConvertor;
 import com.pishgaman.phonebook.utils.ExcelDataExporter;
-import com.pishgaman.phonebook.utils.ExcelDataImporter;
 import com.pishgaman.phonebook.utils.ExcelTemplateGenerator;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
-import org.apache.poi.ss.usermodel.BorderStyle;
-import org.apache.poi.ss.usermodel.FillPatternType;
-import org.apache.poi.ss.usermodel.HorizontalAlignment;
-import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.*;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -37,12 +30,15 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import static com.pishgaman.phonebook.utils.DateConvertor.convertJalaliToGregorian;
 
 @Service
 @RequiredArgsConstructor
@@ -75,12 +71,40 @@ public class PersonService {
     public List<PersonSelectDto> searchPersonByNameContaining(String searchQuery) {
         return personRepository.findPersonByFirstNameOrLastNameContaining(searchQuery,searchQuery).stream().map(personMapper::toSelectDto).collect(Collectors.toList());
     }
-    public String importPersonsFromExcel(MultipartFile file) throws IOException {
-        List<PersonDto> personDtos = ExcelDataImporter.importData(file, PersonDto.class);
-        List<Person> persons = personDtos.stream().map(personMapper::toEntity).collect(Collectors.toList());
-        personRepository.saveAll(persons);
-        return persons.size() + " persons have been imported successfully.";
+    public List<PersonDto> importPersonsFromExcel(MultipartFile file) throws IOException {
+        List<PersonDto> persons = new ArrayList<>();
+
+        Workbook workbook = new XSSFWorkbook(file.getInputStream());
+        Sheet sheet = workbook.getSheetAt(0);
+        Iterator<Row> rows = sheet.iterator();
+
+        // Skip the header row
+        if (rows.hasNext()) {
+            rows.next();
+        }
+
+        while (rows.hasNext()) {
+            Row currentRow = rows.next();
+            PersonDto person = new PersonDto();
+
+            person.setFirstName(currentRow.getCell(0).getStringCellValue());
+            person.setLastName(currentRow.getCell(1).getStringCellValue());
+            person.setFatherName(currentRow.getCell(2).getStringCellValue());
+            person.setNationalId(currentRow.getCell(3).getStringCellValue());
+            person.setBirthDate(convertJalaliToGregorian(currentRow.getCell(4).getStringCellValue()));
+            person.setRegistrationNumber(currentRow.getCell(5).getStringCellValue());
+            person.setPostalCode(currentRow.getCell(6).getStringCellValue());
+            person.setAddress(currentRow.getCell(7).getStringCellValue());
+            person.setPhoneNumber(currentRow.getCell(8).getStringCellValue());
+
+            persons.add(person);
+        }
+
+        workbook.close();
+        List<Person> personEntities = persons.stream().map(personMapper::toEntity).toList();
+        return personRepository.saveAll(personEntities).stream().map(personMapper::toDto).collect(Collectors.toList());
     }
+
     public byte[] exportPersonsToExcel() throws IOException {
         List<PersonDto> personDtos = personRepository.findAll().stream().map(personMapper::toDto)
                 .collect(Collectors.toList());

@@ -42,10 +42,10 @@ public class CustomerController {
     }
 
     @PostMapping("/import")
-    public ResponseEntity<String> importCustomersFromExcel(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> importCustomersFromExcel(@RequestParam("file") MultipartFile file) {
         try {
-            String message = customerService.importCustomersFromExcel(file);
-            return ResponseEntity.status(HttpStatus.OK).body(message);
+            List<CustomerDto> customerDtoList = customerService.importCustomersFromExcel(file);
+            return ResponseEntity.status(HttpStatus.OK).body(customerDtoList);
         } catch (IOException e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to import from Excel file: " + e.getMessage());

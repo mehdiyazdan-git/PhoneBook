@@ -19,7 +19,7 @@ public class GlobalExceptionHandler {
     // Handle BoardMemberAlreadyExistsException
     @ExceptionHandler(BoardMemberAlreadyExistsException.class)
     public ResponseEntity<String> handleBoardMemberAlreadyExistsException(BoardMemberAlreadyExistsException ex, WebRequest request) {
-        System.out.println(ex.getMessage());
+        logger.error(ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(ex.getMessage());
@@ -28,37 +28,33 @@ public class GlobalExceptionHandler {
     // Handle EntityNotFoundException
     @ExceptionHandler(EntityNotFoundException.class)
     public ResponseEntity<String> handleEntityNotFoundException(EntityNotFoundException ex, WebRequest request) {
-        System.out.println(ex.getMessage());
+        logger.error(ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.NOT_FOUND)
                 .body(ex.getMessage());
     }
-    // handle ExpiredJwtException
-//    @ExceptionHandler(ExpiredJwtDurationException.class)
-//    public ResponseEntity<String> handleExpiredJwtDurationException(ExpiredJwtDurationException ex,  WebRequest request){
-//        return ResponseEntity
-//                .status(HttpStatus.UNAUTHORIZED)
-//                .body(ex.getMessage());
-//    }
+
     @ExceptionHandler(ExpiredJwtException.class)
     public ResponseEntity<String> handleExpiredJwtException(ExpiredJwtException ex,  WebRequest request){
+        String path = request.getDescription(false);
+        logger.error(" token expired for Path: {}",path);
         return ResponseEntity
-                .status(HttpStatus.UNAUTHORIZED)
-                .body(ex.getMessage());
+                .status(HttpStatus.FORBIDDEN)
+                .body("expired token");
     }
 
 
     // Handle IllegalArgumentException
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex, WebRequest request) {
-        System.out.println(ex.getMessage());
+        logger.error(ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(ex.getMessage());
     }
     @ExceptionHandler(InvalidDataAccessApiUsageException.class)
     public ResponseEntity<String> handleInvalidDataAccessApiUsageException(InvalidDataAccessApiUsageException ex, WebRequest request) {
-        System.out.println("آبجکت پرس و جو نا معتبر است. لطفا آن را در ریپازیتوری اصلاح کنید.." +ex.getMessage());
+        logger.error(ex.getMessage());
         ex.printStackTrace();
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -66,15 +62,14 @@ public class GlobalExceptionHandler {
     }
     @ExceptionHandler(DatabaseIntegrityViolationException.class)
     public ResponseEntity<String> handleDatabaseIntegrityViolationException(DatabaseIntegrityViolationException ex, WebRequest request) {
-        System.out.println(ex.getMessage());
+        logger.error(ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.CONFLICT)
                 .body(ex.getMessage());}
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<String> handleGenericException(Exception ex, WebRequest request) {
-        System.out.println(ex.getMessage());
-        System.out.println(ex.getCause());
+        logger.error(ex.getMessage());
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
                 .body("An error occurred on the server: " + ex.getMessage());

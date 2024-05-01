@@ -7,22 +7,24 @@ import com.pishgaman.phonebook.security.token.TokenRepository;
 import com.pishgaman.phonebook.security.token.TokenType;
 import com.pishgaman.phonebook.security.user.User;
 import com.pishgaman.phonebook.security.user.UserRepository;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 
 
@@ -61,11 +63,6 @@ public class AuthenticationService {
                 .build();
     }
 
-    /**
-     * Authenticates a user based on username and password provided in the request.
-     * @param request The authentication request containing username and password.
-     * @return An authentication response containing the access token, refresh token, username, and user role.
-     */
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
         try {
             authenticationManager.authenticate(
@@ -82,7 +79,7 @@ public class AuthenticationService {
             var jwtToken = jwtService.generateToken(user);
             var refreshToken = jwtService.generateRefreshToken(user);
 
-            revokeAllUserTokens(user);
+            deleteAllUserTokens(user);
             saveUserToken(user, jwtToken);
 
             return AuthenticationResponse.builder()
@@ -93,46 +90,10 @@ public class AuthenticationService {
                     .build();
         } catch (AuthenticationException e) {
             logger.error("Authentication failed: {}", e.getMessage());
-            throw new BadCredentialsException("Invalid username or password");
+            setResponse(null, HttpServletResponse.SC_UNAUTHORIZED, "Authentication failed");
         }
+        return null;
     }
-
-
-    public void refreshToken(
-            HttpServletRequest request,
-            HttpServletResponse response
-    ) {
-        final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            setResponse(response, HttpServletResponse.SC_BAD_REQUEST, "Bearer token not found");
-            return;
-        }
-        logger.info("Refresh Token API triggered");
-        String refreshToken = authHeader.substring(7);
-        try {
-            String username = jwtService.extractUsername(refreshToken);
-            User user = this.userRepository.findByUsername(username)
-                    .orElseThrow(() -> new UsernameNotFoundException("User not found"));
-
-            if (jwtService.isTokenValid(refreshToken, user)) {
-                String accessToken = jwtService.generateToken(user);
-                revokeAllUserTokens(user);
-                saveUserToken(user, accessToken);
-                AuthenticationResponse authResponse = AuthenticationResponse.builder()
-                        .accessToken(accessToken)
-                        .refreshToken(refreshToken)
-                        .userName(username)
-                        .role(user.getRole().name())
-                        .build();
-                response.setContentType("application/json;charset=UTF-8");
-                new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
-            }
-        } catch (Exception e) {
-            logger.error("Error refreshing token: {}", e.getMessage());
-            setResponse(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Failed to refresh token: " + e.getMessage());
-        }
-    }
-
 
     private void saveUserToken(User user, String jwtToken) {
         var token = Token.builder()
@@ -145,15 +106,8 @@ public class AuthenticationService {
         tokenRepository.save(token);
     }
 
-    private void revokeAllUserTokens(User user) {
-        var validUserTokens = tokenRepository.findAllValidTokenByUser(user.getId());
-        if (validUserTokens.isEmpty())
-            return;
-        validUserTokens.forEach(token -> {
-            token.setExpired(true);
-            token.setRevoked(true);
-        });
-        tokenRepository.saveAll(validUserTokens);
+    private void deleteAllUserTokens(User user) {
+        tokenRepository.deleteAllByUserId(user.getId());
     }
 
     public boolean isTableEmpty() {
@@ -161,14 +115,19 @@ public class AuthenticationService {
     }
 
     private void setResponse(HttpServletResponse response, int status, String message) {
+        HttpServletResponse httpServletResponse = response;
         try {
-            response.setStatus(status);
-            response.setContentType("application/json;charset=UTF-8");
-            response.getWriter().write(new ObjectMapper().writeValueAsString(Map.of("error", message)));
-            response.getWriter().flush();
+            if (response == null) {
+                // If response is null, use the current HttpServletResponse
+                httpServletResponse = ((ServletRequestAttributes) Objects.requireNonNull(RequestContextHolder.getRequestAttributes())).getResponse();
+            }
+            assert response != null;
+            httpServletResponse.setStatus(status);
+            httpServletResponse.setContentType("application/json;charset=UTF-8");
+            httpServletResponse.getWriter().write(new ObjectMapper().writeValueAsString(Map.of("error", message)));
+            httpServletResponse.getWriter().flush();
         } catch (IOException e) {
             logger.error("Failed to set HTTP response: {}", e.getMessage());
         }
     }
-
 }

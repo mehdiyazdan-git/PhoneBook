@@ -4,6 +4,7 @@ import com.github.eloyzone.jalalicalendar.DateConverter;
 import com.github.eloyzone.jalalicalendar.JalaliDate;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
@@ -32,4 +33,15 @@ public class DateConvertor {
         // Combine formatted Jalali date and formatted time into one string.
         return formattedJalaliDate + " - " + formattedTime;
     }
+
+    public static LocalDate convertJalaliToGregorian(String jalaliDate) {
+        DateConverter dateConverter = new DateConverter();
+
+        String[] parts = jalaliDate.split("/");
+        int jalaliYear = Integer.parseInt(parts[0]);
+        int jalaliMonth = Integer.parseInt(parts[1]);
+        int jalaliDay = Integer.parseInt(parts[2]);
+
+        return dateConverter.jalaliToGregorian(jalaliYear, jalaliMonth, jalaliDay);
+    };
 }

@@ -82,17 +82,20 @@ public class PersonController {
     }
 
     @PostMapping("/import")
-    public ResponseEntity<String> importPersonsFromExcel(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> importPersonsFromExcel(@RequestParam("file") MultipartFile file) {
         try {
-            String message = personService.importPersonsFromExcel(file);
-            return ResponseEntity.ok(message);
+            List<PersonDto> list = personService.importPersonsFromExcel(file);
+            return ResponseEntity.ok(list);
         } catch (IOException e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to import persons from Excel file: " + e.getMessage());
         } catch (EntityNotFoundException e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(e.getMessage());
         } catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body("Error processing Excel file: " + e.getMessage());
         }

@@ -200,28 +200,29 @@ public class CompanyService {
                     continue;
                 }
                 CompanyDto company = new CompanyDto();
-                company.setId(Long.parseLong(row.getCell(0).getStringCellValue()));
-                company.setTaxEconomicCode(row.getCell(1).getStringCellValue());
-                company.setTaxFileNumber(row.getCell(2).getStringCellValue());
-                company.setTaxFileClass(row.getCell(3).getStringCellValue());
-                company.setTaxTrackingID(row.getCell(4).getStringCellValue());
-                company.setTaxPortalUsername(row.getCell(5).getStringCellValue());
-                company.setTaxPortalPassword(row.getCell(6).getStringCellValue());
-                company.setTaxDepartment(row.getCell(7).getStringCellValue());
-                company.setCompanyName(row.getCell(8).getStringCellValue());
-                company.setNationalId(row.getCell(9).getStringCellValue());
-                company.setRegistrationNumber(row.getCell(10).getStringCellValue());
-                company.setRegistrationDate(convertJalaliToGregorian(row.getCell(11).getStringCellValue()));
-                company.setAddress(row.getCell(12).getStringCellValue());
-                company.setPostalCode(row.getCell(13).getStringCellValue());
-                company.setPhoneNumber(row.getCell(14).getStringCellValue());
-                company.setFaxNumber(row.getCell(15).getStringCellValue());
-                company.setSoftwareUsername(row.getCell(16).getStringCellValue());
-                company.setSoftwarePassword(row.getCell(17).getStringCellValue());
+                company.setTaxEconomicCode(row.getCell(0).getStringCellValue());
+                company.setTaxFileNumber(row.getCell(1).getStringCellValue());
+                company.setTaxFileClass(row.getCell(2).getStringCellValue());
+                company.setTaxTrackingID(row.getCell(3).getStringCellValue());
+                company.setTaxPortalUsername(row.getCell(4).getStringCellValue());
+                company.setTaxPortalPassword(row.getCell(5).getStringCellValue());
+                company.setTaxDepartment(row.getCell(6).getStringCellValue());
+                company.setCompanyName(row.getCell(7).getStringCellValue());
+                company.setNationalId(row.getCell(8).getStringCellValue());
+                company.setRegistrationNumber(row.getCell(9).getStringCellValue());
+                company.setRegistrationDate(convertJalaliToGregorian(row.getCell(10).getStringCellValue()));
+                company.setAddress(row.getCell(11).getStringCellValue());
+                company.setPostalCode(row.getCell(12).getStringCellValue());
+                company.setPhoneNumber(row.getCell(13).getStringCellValue());
+                company.setFaxNumber(row.getCell(14).getStringCellValue());
+                company.setSoftwareUsername(row.getCell(15).getStringCellValue());
+                company.setSoftwarePassword(row.getCell(16).getStringCellValue());
                 companyDtoList.add(company);
             }
         }
-        return companyDtoList;
+            List<Company> companies = companyRepository.saveAll(companyDtoList.stream().map(companyMapper::toEntity).collect(Collectors.toList()));
+            return companies.stream().map(companyMapper::toDto).collect(Collectors.toList());
+
 
     }
     public String importCompaniesFromExcel(MultipartFile file) throws IOException {
@@ -253,20 +254,17 @@ public class CompanyService {
 
     public LocalDate convertJalaliToGregorian(String jalaliDate) {
         DateConverter dateConverter = new DateConverter();
+        if (jalaliDate == null || jalaliDate.isEmpty()) {
+            return null;
+        }
 
         String[] parts = jalaliDate.split("/");
         int jalaliYear = Integer.parseInt(parts[0]);
         int jalaliMonth = Integer.parseInt(parts[1]);
         int jalaliDay = Integer.parseInt(parts[2]);
-        JalaliDate jalaliDate1 = dateConverter.gregorianToJalali(jalaliYear, jalaliMonth, jalaliDay);
 
-        if (jalaliDate1 != null) {
-            return LocalDate.of(jalaliDate1.getYear(), jalaliDate1.getMonthPersian().getValue(), jalaliDate1.getDay());
-        }
-        return null;
-    }
-
-    ;
+        return dateConverter.jalaliToGregorian(jalaliYear, jalaliMonth, jalaliDay);
+    };
 
     public Page<CompanyDto> findAll(CompanySearch search, int page, int size, String sortBy, String order) {
         Sort sort = Sort.by(Sort.Direction.fromString(order), sortBy);

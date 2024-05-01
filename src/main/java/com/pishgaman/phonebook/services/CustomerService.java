@@ -33,6 +33,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.pishgaman.phonebook.utils.DateConvertor.convertJalaliToGregorian;
+
 
 @Service
 @RequiredArgsConstructor
@@ -47,41 +49,38 @@ public class CustomerService {
         return userRepository.findById(userId).map(user -> user.getFirstname() + " " + user.getLastname()).orElse("");
     }
 
-    public String importCustomersFromExcel1(MultipartFile file) throws IOException {
-        if (file.isEmpty()) {
-            throw new RuntimeException("The provided file is empty.");
+    public List<CustomerDto> importCustomersFromExcel(MultipartFile file) throws IOException {
+        List<CustomerDto> customers = new ArrayList<>();
+
+        Workbook workbook = new XSSFWorkbook(file.getInputStream());
+        Sheet sheet = workbook.getSheetAt(0);
+        Iterator<Row> rows = sheet.iterator();
+
+        // Skip the header row
+        if (rows.hasNext()) {
+            rows.next();
         }
 
-        List<CustomerDto> customerDtos = new ArrayList<>();
-        try (Workbook workbook = new XSSFWorkbook(file.getInputStream())) {
-            Sheet sheet = workbook.getSheetAt(0);
-            Iterator<Row> rows = sheet.rowIterator();
+        while (rows.hasNext()) {
+            Row currentRow = rows.next();
+            CustomerDto customer = new CustomerDto();
 
-            // Skip the header row
-            if (rows.hasNext()) {
-                rows.next();
+            customer.setName(currentRow.getCell(0).getStringCellValue());
+            customer.setAddress(currentRow.getCell(1).getStringCellValue());
+            customer.setPhoneNumber(currentRow.getCell(2).getStringCellValue());
+            customer.setNationalIdentity(currentRow.getCell(3).getStringCellValue());
+            customer.setRegisterCode(currentRow.getCell(4).getStringCellValue());
+            if (currentRow.getCell(5) != null && currentRow.getCell(5).getCellType() == CellType.STRING) {
+                customer.setRegisterDate(convertJalaliToGregorian(currentRow.getCell(5).getStringCellValue()));
             }
 
-            int rowNum = 1; // Start counting from 1 for the first data row
-            while (rows.hasNext()) {
-                Row currentRow = rows.next();
-                try {
-                    CustomerDto customerDto = ExcelRowParser.parseRowToDto(currentRow, CustomerDto.class, rowNum);
-                    customerDtos.add(customerDto);
-                } catch (RuntimeException e) {
-                    System.out.println(e.getMessage());
-                    e.printStackTrace();
-                    throw new RuntimeException("Error at row " + rowNum + ": " + e.getMessage(), e);
-                }
-                rowNum++;
-            }
+            customers.add(customer);
         }
-        List<Customer> customers = customerDtos.stream()
-                .map(customerMapper::toEntity)
-                .collect(Collectors.toList());
 
-        customerRepository.saveAll(customers);
-        return customers.size() + " customers have been imported successfully.";
+        workbook.close();
+        List<Customer> customerList = customerRepository.saveAll(customers.stream().map(customerMapper::toEntity).collect(Collectors.toList()));
+        return customerList.stream().map(customerMapper::toDto).collect(Collectors.toList());
+
     }
 
     public byte[] generateCustomerTemplate() throws IOException {
@@ -160,12 +159,12 @@ public class CustomerService {
 
         return style;
     }
-    public String importCustomersFromExcel(MultipartFile file) throws IOException {
-        List<CustomerDto> customerDtos = ExcelDataImporter.importData(file, CustomerDto.class);
-        List<Customer> customers = customerDtos.stream().map(customerMapper::toEntity).collect(Collectors.toList());
-        customerRepository.saveAll(customers);
-        return customers.size() + " customers have been imported successfully.";
-    }
+//    public String importCustomersFromExcel(MultipartFile file) throws IOException {
+//        List<CustomerDto> customerDtos = ExcelDataImporter.importData(file, CustomerDto.class);
+//        List<Customer> customers = customerDtos.stream().map(customerMapper::toEntity).collect(Collectors.toList());
+//        customerRepository.saveAll(customers);
+//        return customers.size() + " customers have been imported successfully.";
+//    }
 
     public byte[] exportCustomersToExcel() throws IOException {
         List<CustomerDto> customerDtos = customerRepository.findAll().stream().map(customerMapper::toDto)

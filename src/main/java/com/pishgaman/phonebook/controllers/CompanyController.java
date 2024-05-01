@@ -53,20 +53,24 @@ public class CompanyController {
     }
 
     @PostMapping("/import-companies")
-    public ResponseEntity<String> importCompaniesFromExcel(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> importCompaniesFromExcel(@RequestParam("file") MultipartFile file) {
         try {
-            String message = companyService.importCompaniesFromExcel(file);
-            return ResponseEntity.ok(message);
+            List<CompanyDto> companyDtoList = companyService.readCompaniesFromExcel(file);
+            return ResponseEntity.ok(companyDtoList);
         } catch (IOException e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to import companies from Excel file: " + e.getMessage());
         } catch (EntityNotFoundException e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(e.getMessage());
         } catch (DatabaseIntegrityViolationException e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body("Error processing Excel file: " + e.getMessage());
         }catch (Exception e) {
+            e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error processing Excel file: " + e.getMessage());
         }

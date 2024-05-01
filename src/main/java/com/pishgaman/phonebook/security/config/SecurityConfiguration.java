@@ -39,7 +39,6 @@ public class SecurityConfiguration {
             "/swagger-ui/**",
             "/webjars/**",
             "/swagger-ui.html",
-            "/api/v1/auth/logout",
     };
     private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
@@ -70,24 +69,19 @@ public class SecurityConfiguration {
                                 .addLogoutHandler(logoutHandler)
                                 .logoutSuccessHandler((request, response, authentication) -> {
                                     SecurityContextHolder.clearContext();
-                                    response.setHeader("Access-Control-Allow-Headers", "Authorization");
                                     response.setStatus(HttpServletResponse.SC_NO_CONTENT);
                                 })
                 )
         ;
-
         return http.build();
     }
-
-
-
     @Bean
     public WebMvcConfigurer corsConfigurer() {
         return new WebMvcConfigurer() {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://192.168.2.106:3000") // Change or externalize as necessary
+                        .allowedOrigins("http://192.168.4.2:4000") // Change or externalize as necessary
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);

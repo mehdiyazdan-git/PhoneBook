@@ -44,11 +44,11 @@ public class PhoneBookApplication {
         return args -> {
 
             var admin = RegisterRequest.builder()
-                    .firstname("روزبه")
-                    .lastname("کسری")
-                    .username("kasra")
-                    .email("r.kasra@gmail.com")
-                    .password("123456")
+                    .firstname("مدیر")
+                    .lastname("سیستم")
+                    .username("administrator")
+                    .email("yazdanparast.centos@gmail.com")
+                    .password("PishGaman123@@")
                     .role(ADMIN)
                     .accountNonExpired(true)
                     .accountNonLocked(true)

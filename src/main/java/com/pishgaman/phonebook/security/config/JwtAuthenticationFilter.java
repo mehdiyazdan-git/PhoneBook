@@ -1,9 +1,8 @@
 package com.pishgaman.phonebook.security.config;
 
-import com.pishgaman.phonebook.exceptions.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pishgaman.phonebook.security.token.TokenRepository;
 import com.pishgaman.phonebook.security.user.User;
-
 import io.jsonwebtoken.ExpiredJwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -23,9 +22,6 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.util.Map;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.springframework.http.MediaType;
 
 @Component
 @RequiredArgsConstructor
@@ -78,15 +74,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
           authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
           SecurityContextHolder.getContext().setAuthentication(authToken);
         } else {
-          setResponse(response, HttpServletResponse.SC_UNAUTHORIZED, "expired token");
+          String servletPath = request.getServletPath();
+          String logMessage = String.format("JWT processing failed: expired token -> %s response with %d", servletPath, HttpServletResponse.SC_FORBIDDEN);
+          logger.error(logMessage);
+          setResponse(response, HttpServletResponse.SC_FORBIDDEN, "expired token");
           return;
         }
       }
-    } catch (ExpiredJwtException e) {
-      logger.error("JWT processing failed: {}", e.getMessage());
+    }catch (ExpiredJwtException e) {
+      String servletPath = request.getServletPath();
+      String logMessage = String.format("JWT processing failed: expired token -> %s response with %d", servletPath, HttpServletResponse.SC_FORBIDDEN);
+      logger.error(logMessage);
       setResponse(response, HttpServletResponse.SC_FORBIDDEN, "expired token");
       return;
-    } catch (Exception e) {
+    }
+    catch (Exception e) {
       logger.error("JWT processing failed: {}", e.getMessage());
       setResponse(response, HttpServletResponse.SC_BAD_REQUEST, "malformed token");
       return;
