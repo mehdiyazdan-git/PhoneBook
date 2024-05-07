@@ -8,12 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-@CrossOrigin(
-        origins = "http://localhost:3000",
-        methods = {RequestMethod.GET, RequestMethod.POST},
-        allowedHeaders = {"*"}
-        ,allowCredentials = "true"
-)
+@CrossOrigin
 @RestController
 @RequestMapping("/api/v1/auth")
 @RequiredArgsConstructor

@@ -2,6 +2,7 @@ package com.pishgaman.phonebook.controllers;
 
 import com.pishgaman.phonebook.dtos.AppSettingsDto;
 import com.pishgaman.phonebook.services.AppSettingsService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -9,18 +10,14 @@ import org.springframework.web.bind.annotation.*;
 @CrossOrigin
 @RestController
 @RequestMapping("/api/app-settings")
+@RequiredArgsConstructor
 public class AppSettingsController {
-
     private final AppSettingsService appSettingsService;
 
-    public AppSettingsController(AppSettingsService appSettingsService) {
-        this.appSettingsService = appSettingsService;
-    }
 
     @GetMapping("/max-upload-file-size")
     public ResponseEntity<Long> getMaxUploadFileSize() {
-        long maxUploadFileSize = appSettingsService.find().getMaxUploadFileSize();
-        return ResponseEntity.ok(maxUploadFileSize);
+      return ResponseEntity.ok(appSettingsService.find().getMaxUploadFileSize());
     }
 
     @GetMapping
