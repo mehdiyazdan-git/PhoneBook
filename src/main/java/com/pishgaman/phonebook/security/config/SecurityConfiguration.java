@@ -81,7 +81,17 @@ public class SecurityConfiguration {
             @Override
             public void addCorsMappings(CorsRegistry registry) {
                 registry.addMapping("/**")
-                        .allowedOrigins("http://192.168.4.2:4000") // Change or externalize as necessary
+                        .allowedOrigins("http://192.168.4.2:80") // Change or externalize as necessary
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowedHeaders("*")
+                        .allowCredentials(true);
+                registry.addMapping("/**")
+                        .allowedOrigins("http://192.168.3.195:4000") // Change or externalize as necessary
+                        .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                        .allowedHeaders("*")
+                        .allowCredentials(true);
+                registry.addMapping("/**")
+                        .allowedOrigins("http://192.168.2.106:3000") // Change or externalize as necessary
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);

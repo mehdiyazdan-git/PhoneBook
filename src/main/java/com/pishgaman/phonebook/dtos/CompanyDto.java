@@ -37,4 +37,6 @@ public class CompanyDto  extends BaseDto  implements Serializable {
     private String insurancePortalPassword;
     private String insuranceBranch;
     private String letterPrefix;
+    private Integer letterCounter;
+
 }

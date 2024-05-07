@@ -217,6 +217,7 @@ public class CompanyService {
                 company.setFaxNumber(row.getCell(14).getStringCellValue());
                 company.setSoftwareUsername(row.getCell(15).getStringCellValue());
                 company.setSoftwarePassword(row.getCell(16).getStringCellValue());
+                company.setLetterCounter(0);
                 companyDtoList.add(company);
             }
         }
@@ -310,6 +311,7 @@ public class CompanyService {
             throw new EntityAlreadyExistsException("اشکال! شرکت با نام '" + companyDto.getCompanyName() + "' قبلاً ثبت شده است.");
         }
         Company entity = companyMapper.toEntity(companyDto);
+        entity.setLetterCounter(0);
         Company saved = companyRepository.save(entity);
         return companyMapper.toDto(saved);
     }
