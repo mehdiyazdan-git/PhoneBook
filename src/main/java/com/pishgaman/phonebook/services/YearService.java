@@ -81,6 +81,9 @@ public class YearService {
         if (year.isPresent()) {
             throw new EntityAlreadyExistsException("سال با نام  : " + yearDto.getName() + " وجود دارد.");
         }
+        if (yearDto.getStartingLetterNumber() == null || yearDto.getStartingLetterNumber() == 0){
+            yearDto.setStartingLetterNumber(1L);
+        }
         return yearMapper.toDto(yearRepository.save(yearMapper.toEntity(yearDto)));
     }
 

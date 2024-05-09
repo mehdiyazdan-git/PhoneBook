@@ -184,13 +184,13 @@ public class PersonService {
         boolean result = personRepository.existsById(personId);
         if (result){
             if (documentRepository.existsByPersonId(personId)) {
-                throw new DatabaseIntegrityViolationException("امکان حذف فرد وجود ندارا. ابتدا همه سندهای این فرد را حذف کنید.");
+                throw new DatabaseIntegrityViolationException("امکان حذف فرد وجود ندارد. ابتدا همه سندهای این فرد را حذف کنید.");
             }
             if (boardMemberRepository.existsByPersonId(personId)){
-                throw new DatabaseIntegrityViolationException("امکان حذف فرد وجود ندارا. ابتدا همه سمت های این فرد را حذف کنید.");
+                throw new DatabaseIntegrityViolationException("امکان حذف فرد وجود ندارد. ابتدا همه سمت های این فرد را حذف کنید.");
             }
             if (shareholderRepository.existsByPersonId(personId)){
-                throw new DatabaseIntegrityViolationException("امکان حذف فرد وجود ندارا. ابتدا همه سهام های این فرد را حذف کنید.");
+                throw new DatabaseIntegrityViolationException("امکان حذف فرد وجود ندارد. ابتدا همه سهام های این فرد را حذف کنید.");
             }
             personRepository.deleteById(personId);
             return "فرستنده با موفقیت حذف شد. ";

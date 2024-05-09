@@ -3,15 +3,17 @@ package com.pishgaman.phonebook.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.HashMap;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
-@Entity
 @Getter
 @Setter
 @ToString
 @AllArgsConstructor
 @NoArgsConstructor
+@Entity
 public class Year extends BaseEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -24,6 +26,13 @@ public class Year extends BaseEntity {
 
     @Column(name = "starting_letter_number")
     private Long startingLetterNumber;
+
+    // Map storing counters for each company
+    @ElementCollection
+    @CollectionTable(name = "year_company_counters", joinColumns = @JoinColumn(name = "year_id"))
+    @MapKeyJoinColumn(name = "company_id")
+    @Column(name = "letter_counter")
+    private Map<Company, Integer> letterCounters = new HashMap<>();
 
     public Year(Long id, Long name, Long startingLetterNumber) {
         this.id = id;

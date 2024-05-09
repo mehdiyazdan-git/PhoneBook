@@ -28,6 +28,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -35,7 +37,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
+@CrossOrigin
 @Service
 @RequiredArgsConstructor
 public class BoardMemberService {
@@ -120,26 +122,21 @@ public class BoardMemberService {
         return ExcelTemplateGenerator.generateTemplateExcel(BoardMemberDto.class);
     }
     public BoardMemberDto createBoardMember(BoardMemberDto boardMemberDto) {
-        try {
-            BoardMember existingBoardMemberWithPerson = boardMemberRepository.findByPersonIdAndCompanyIdAndPositionId(boardMemberDto.getPersonId(), boardMemberDto.getCompanyId(), boardMemberDto.getPositionId());
-            if (existingBoardMemberWithPerson != null) {
-                throw new BoardMemberAlreadyExistsException("این شخص قبلا در این شرکت و در این سمت حضور دارد.");
-            }
-            BoardMember existingBoardMember = boardMemberRepository.findByCompanyIdAndPositionId(boardMemberDto.getCompanyId(), boardMemberDto.getPositionId());
-            if (existingBoardMember != null) {
-                throw new BoardMemberAlreadyExistsException("این سمت در شرکت انتخاب شده قبلا اشغال شده است.");
-            }
-
-            BoardMember entity = new BoardMember();
-            entity.setPerson(personRepository.findById(boardMemberDto.getPersonId()).orElse(null));
-            entity.setCompany(companyRepository.findById(boardMemberDto.getCompanyId()).orElse(null));
-            entity.setPosition(positionRepository.findById(boardMemberDto.getPositionId()).orElse(null));
-            BoardMember saved = boardMemberRepository.save(entity);
-            return boardMemberMapper.toDto(saved);
-        } catch (Exception e) {
-            System.out.println("BoardMemberService Exception: " + e.getMessage());
-            throw e;
+        BoardMember existingBoardMemberWithPerson = boardMemberRepository.findByPersonIdAndCompanyIdAndPositionId(boardMemberDto.getPersonId(), boardMemberDto.getCompanyId(), boardMemberDto.getPositionId());
+        if (existingBoardMemberWithPerson != null) {
+            throw new BoardMemberAlreadyExistsException("این شخص قبلا در این شرکت و در این سمت حضور دارد.");
         }
+        BoardMember existingBoardMember = boardMemberRepository.findByCompanyIdAndPositionId(boardMemberDto.getCompanyId(), boardMemberDto.getPositionId());
+        if (existingBoardMember != null) {
+            throw new BoardMemberAlreadyExistsException("این سمت در شرکت انتخاب شده قبلا اشغال شده است.");
+        }
+
+        BoardMember entity = new BoardMember();
+        entity.setPerson(personRepository.findById(boardMemberDto.getPersonId()).orElseThrow(() -> new EntityNotFoundException("شخص مورد نظر یافت نشد.")));
+        entity.setCompany(companyRepository.findById(boardMemberDto.getCompanyId()).orElseThrow(() -> new EntityNotFoundException("شرکت مورد نظر یافت نشد.")));
+        entity.setPosition(positionRepository.findById(boardMemberDto.getPositionId()).orElseThrow(() -> new EntityNotFoundException("سمت مورد نظر یافت نشد.")));
+        BoardMember saved = boardMemberRepository.save(entity);
+        return boardMemberMapper.toDto(saved);
     }
     public BoardMemberDto updateBoardMember(Long boardMemberId, BoardMemberDto boardMemberDto) {
         try {

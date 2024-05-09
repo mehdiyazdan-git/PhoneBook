@@ -2,6 +2,8 @@ package com.pishgaman.phonebook.controllers;
 
 import com.pishgaman.phonebook.dtos.CompanySelect;
 import com.pishgaman.phonebook.dtos.PositionDto;
+import com.pishgaman.phonebook.exceptions.DatabaseIntegrityViolationException;
+import com.pishgaman.phonebook.exceptions.DuplicateEntityException;
 import com.pishgaman.phonebook.searchforms.PositionSearch;
 import com.pishgaman.phonebook.services.PositionService;
 import com.pishgaman.phonebook.utils.FileMediaType;
@@ -88,29 +90,55 @@ public class PositionController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<PositionDto> getPositionById(@PathVariable Long id) {
-        PositionDto position = positionService.findById(id);
-        return ResponseEntity.ok(position);
+    public ResponseEntity<?> getPositionById(@PathVariable Long id) {
+        try {
+            PositionDto position = positionService.findById(id);
+            return ResponseEntity.ok(position);
+        }catch (EntityNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 
     @PostMapping(path = {"/", ""})
-    public ResponseEntity<PositionDto> createPosition(@RequestBody PositionDto positionDto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(positionService.createPosition(positionDto));
+    public ResponseEntity<?> createPosition(@RequestBody PositionDto positionDto) {
+        try {
+            return ResponseEntity.status(HttpStatus.CREATED).body(positionService.createPosition(positionDto));
+        }catch (DataIntegrityViolationException | DuplicateEntityException e){
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        } catch (Exception e){
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<PositionDto> updatePosition(@PathVariable Long id, @RequestBody PositionDto positionDto) {
+    public ResponseEntity<?> updatePosition(@PathVariable Long id, @RequestBody PositionDto positionDto) {
         try {
             PositionDto updatedPosition = positionService.updatePosition(id, positionDto);
             return ResponseEntity.ok(updatedPosition);
-        } catch (DataIntegrityViolationException e) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, e.getMessage(), e);
+        } catch (DataIntegrityViolationException | DuplicateEntityException e){
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        } catch (Exception e){
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deletePosition(@PathVariable Long id) {
-        positionService.deletePosition(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> deletePosition(@PathVariable Long id) {
+        try {
+            positionService.deletePosition(id);
+            return ResponseEntity.noContent().build();
+        }catch (EntityNotFoundException e){
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }catch (DatabaseIntegrityViolationException e){
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
+        }
     }
 }

@@ -43,7 +43,6 @@ public class UserController {
         UserDetailDto user = userService.findById(id);
         return ResponseEntity.ok(user);
     }
-    //implement getUserFullNameByUserId method
     @GetMapping("/{userName}/fullName")
     public ResponseEntity<String> getUserFullNameByUserName(@PathVariable String userName) {
         String fullName = userService.getUserFullNameByUserName(userName);

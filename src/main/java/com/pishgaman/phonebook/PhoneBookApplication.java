@@ -10,6 +10,7 @@ import com.pishgaman.phonebook.repositories.PositionRepository;
 import com.pishgaman.phonebook.repositories.YearRepository;
 import com.pishgaman.phonebook.security.auth.AuthenticationService;
 import com.pishgaman.phonebook.security.auth.RegisterRequest;
+import com.pishgaman.phonebook.security.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
@@ -40,7 +41,8 @@ public class PhoneBookApplication {
         SpringApplication.run(PhoneBookApplication.class, args);
     }
     @Bean
-    public CommandLineRunner loadData(AuthenticationService service) {
+    public CommandLineRunner loadData(AuthenticationService service,
+                                      UserRepository userRepository) {
         return args -> {
 
             var admin = RegisterRequest.builder()
@@ -57,7 +59,7 @@ public class PhoneBookApplication {
                     .build();
 
 
-            if (service.isTableEmpty()){
+            if (service.isTableEmpty() || userRepository.count() == 0){
                 System.out.println("Admin token: " + service.register(admin).getAccessToken());
             }
             if (appSettingsRepository.count() == 0){
@@ -79,10 +81,10 @@ public class PhoneBookApplication {
             // Check if the year table is already populated to prevent duplicate entries
             if (yearRepository.count() == 0) {
                 // Create Year instances
-                Year year1400 = new Year(null, 1400L, 0L);
-                Year year1401 = new Year(null, 1401L, 0L);
-                Year year1402 = new Year(null, 1402L, 0L);
-                Year year1403 = new Year(null, 1403L, 0L);
+                Year year1400 = new Year(null, 1400L, 1L);
+                Year year1401 = new Year(null, 1401L, 1L);
+                Year year1402 = new Year(null, 1402L, 1L);
+                Year year1403 = new Year(null, 1403L, 1L);
 
                 // Persist them using yearRepository
                 yearRepository.save(year1400);

@@ -15,6 +15,9 @@ public interface PositionRepository extends JpaRepository<Position, Long>, JpaSp
     @Query("select p from Position p where p.name = :name")
     Position findPositionByName(@Param("name") String name);
 
+    @Query("select p from Position p where p.name = :name and p.id <> :id")
+    Position findPositionByNameAndIdNot(@Param("name") String name, @Param("id") Long id);
+
     @Query("select p from Position p where p.name like concat('%', :name, '%')")
     List<Position> findAllByNameContaining(@Param("name") String name);
 

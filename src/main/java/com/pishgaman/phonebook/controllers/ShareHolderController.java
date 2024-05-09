@@ -113,6 +113,24 @@ public class ShareHolderController {
                     .body("Error processing file: " + e.getMessage());
         }
     }
+    @PutMapping("/{shareHolderId}")
+    public ResponseEntity<?> updateShareHolder(
+            @PathVariable("shareHolderId") Long shareHolderId,
+            @RequestBody ShareholderDto shareholderDto
+    ) {
+        try {
+            ShareholderDto updatedShareholder = shareHolderService.updateShareHolder(shareHolderId, shareholderDto);
+            return ResponseEntity.status(HttpStatus.OK).body(updatedShareholder);
+        }catch (EntityNotFoundException e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body("Error processing file: " + e.getMessage());
+        }
+    }
     @GetMapping("/{shareHolderId}/download-file")
     public ResponseEntity<Resource> downloadShareHolderFile(@PathVariable Long shareHolderId) {
         ShareholderDto shareholder = shareHolderService.findById(shareHolderId);
@@ -157,13 +175,6 @@ public class ShareHolderController {
         } catch (IOException e) {
             return ResponseEntity.internalServerError().body(null);
         }
-    }
-
-
-    @PutMapping("/{shareHolderId}")
-    public ResponseEntity<ShareholderDto> updateShareHolder(@PathVariable("shareHolderId") Long shareHolderId, @RequestBody ShareholderDto shareholderDto) {
-        ShareholderDto updatedShareholder = shareHolderService.updateShareHolder(shareHolderId, shareholderDto);
-        return ResponseEntity.status(HttpStatus.OK).body(updatedShareholder);
     }
 
     @DeleteMapping("/{shareHolderId}")

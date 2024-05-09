@@ -1,16 +1,20 @@
 package com.pishgaman.phonebook.controllers;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.pishgaman.phonebook.dtos.DocumentDetailDto;
 import com.pishgaman.phonebook.dtos.DocumentDto;
 import com.pishgaman.phonebook.services.DocumentService;
 import com.pishgaman.phonebook.utils.FileMediaType;
 import jakarta.persistence.EntityNotFoundException;
+import lombok.Data;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.List;
 
 @CrossOrigin
@@ -18,61 +22,90 @@ import java.util.List;
 @RequestMapping("/api/documents")
 public class DocumentController {
     private final DocumentService documentService;
+    @Autowired
     public DocumentController(DocumentService documentService) {
         this.documentService = documentService;
     }
+    @Data
+    public static class FormDataWithFile {
+        private String documentName;
+        private String documentType;
+        private String fileExtension;
+        private Long personId;
+        private Long companyId;
+        private Long letterId;
+    }
 
-    @PostMapping(path = { "/", "" })
+    @PostMapping(path = { "/", "" },consumes = "multipart/form-data")
     public ResponseEntity<DocumentDto> createDocument(
-            @RequestParam("documentName") String documentName,
-            @RequestParam("documentType") String documentType,
-            @RequestParam("fileExtension") String fileExtension,
             @RequestParam("documentFile") MultipartFile documentFile,
-            @RequestParam(value = "personId",required = false) Long personId,
-            @RequestParam(value = "companyId",required = false) Long companyId,
-            @RequestParam(value = "letterId",required = false) Long letterId
-            ) throws Exception {
+            @ModelAttribute FormDataWithFile formData
+    ) {
         if (documentFile.isEmpty()) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null);
         }
+
         DocumentDto documentDto = new DocumentDto();
-        documentDto.setDocumentName(documentName);
-        documentDto.setDocumentType(documentType);
-        documentDto.setFileExtension(fileExtension);
+        documentDto.setDocumentName(formData.getDocumentName());
+        documentDto.setDocumentType(formData.getDocumentType());
+        documentDto.setFileExtension(formData.getFileExtension());
         try {
             documentDto.setDocumentFile(documentFile.getBytes());
         } catch (IOException e) {
             e.printStackTrace();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
-        if (personId != null && personId instanceof Long){
-            documentDto.setPersonId(personId);
+
+        if (formData.getPersonId() != null && formData.getPersonId() instanceof Long) {
+            documentDto.setPersonId(formData.getPersonId());
         }
-        if (companyId != null && companyId instanceof Long){
-            documentDto.setCompanyId(companyId);
+        if (formData.getCompanyId() != null && formData.getCompanyId() instanceof Long) {
+            documentDto.setCompanyId(formData.getCompanyId());
         }
-        if (letterId != null && letterId instanceof Long){
-            documentDto.setLetterId(letterId);
+        if (formData.getLetterId() != null && formData.getLetterId() instanceof Long) {
+            documentDto.setLetterId(formData.getLetterId());
         }
+
         DocumentDto newDocument = documentService.createDocument(documentDto);
         return ResponseEntity.ok(newDocument);
     }
 
     @GetMapping(path = "/by-person-id/{personId}")
     public ResponseEntity<List<DocumentDetailDto>> getAllDocuments(@PathVariable Long personId) {
-        List<DocumentDetailDto> documents = documentService.findAllByPersonId(personId);
-        return ResponseEntity.ok(documents);
+        try {
+            List<DocumentDetailDto> documents = documentService.findAllByPersonId(personId);
+            return ResponseEntity.ok(documents);
+        }catch (EntityNotFoundException e){
+            e.printStackTrace();
+            return ResponseEntity.notFound().build();
+        }catch (Exception e){
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
     @GetMapping(path = "/by-company-id/{companyId}")
     public ResponseEntity<List<DocumentDetailDto>> findAllByCompanyId(@PathVariable Long companyId) {
-        List<DocumentDetailDto> documents = documentService.findAllByCompanyId(companyId);
-        return ResponseEntity.ok(documents);
+        try {
+            List<DocumentDetailDto> documents = documentService.findAllByCompanyId(companyId);
+            return ResponseEntity.ok(documents);
+        }catch (EntityNotFoundException e){
+            e.printStackTrace();
+            return ResponseEntity.notFound().build();
+        }catch (Exception e){
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 
     @GetMapping(path = "/by-letter-id/{letterId}")
     public ResponseEntity<List<DocumentDetailDto>> findAllByLetterId(@PathVariable Long letterId) {
-        List<DocumentDetailDto> documents = documentService.findAllByLetterId(letterId);
-        return ResponseEntity.ok(documents);
+      try {
+          List<DocumentDetailDto> documents = documentService.findAllByLetterId(letterId);
+          return ResponseEntity.ok(documents);
+      }catch (EntityNotFoundException e){
+          e.printStackTrace();
+          return ResponseEntity.notFound().build();
+      }
     }
 
     @GetMapping("/download-all-documents.xlsx")
@@ -150,7 +183,11 @@ public class DocumentController {
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteDocument(@PathVariable Long id) {
-        documentService.deleteDocument(id);
-        return ResponseEntity.noContent().build();
+      try {
+          documentService.deleteDocument(id);
+          return ResponseEntity.noContent().build();
+      }catch (Exception e){
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+      }
     }
 }

@@ -18,10 +18,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface LetterRepository extends JpaRepository<Letter, Long> {
 
+    @Query("select count(l) from Letter l where l.company.id = :companyId and l.year.id = :yearId")
+    Long countAllByCompanyIdAndYearId(@Param("companyId") Long companyId, @Param("yearId") Long yearId);
     @Query("select (count(l) > 0) from Letter l where l.createdBy = :createdBy or l.lastModifiedBy = :lastModifiedBy")
     boolean existsByCreatedByOrLastModifiedBy(@Param("createdBy") int createdBy, @Param("lastModifiedBy") int lastModifiedBy);
 

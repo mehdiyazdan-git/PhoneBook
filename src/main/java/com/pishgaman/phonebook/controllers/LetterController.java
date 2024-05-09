@@ -29,6 +29,15 @@ public class LetterController {
         this.letterService = letterService;
     }
 
+    @GetMapping("/generate-number")
+    public ResponseEntity<String> generateLetterNumber(@RequestParam Long companyId, @RequestParam Long yearId) {
+        try {
+            String letterNumber = letterService.generateLetterNumber(companyId, yearId);
+            return ResponseEntity.ok(letterNumber);
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error generating letter number: " + e.getMessage());
+        }
+    }
 
     @GetMapping("/export")
     public ResponseEntity<byte[]> exportLettersToExcel() throws IOException {

@@ -4,6 +4,7 @@ import com.pishgaman.phonebook.dtos.PersonDto;
 import com.pishgaman.phonebook.dtos.PositionDto;
 import com.pishgaman.phonebook.entities.Position;
 import com.pishgaman.phonebook.exceptions.DatabaseIntegrityViolationException;
+import com.pishgaman.phonebook.exceptions.DuplicateEntityException;
 import com.pishgaman.phonebook.mappers.PositionMapper;
 import com.pishgaman.phonebook.repositories.BoardMemberRepository;
 import com.pishgaman.phonebook.repositories.PositionRepository;
@@ -25,6 +26,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -88,6 +90,12 @@ public class PositionService {
     }
 
     public PositionDto createPosition(PositionDto positionDto) {
+        Position position = positionRepository.findPositionByName(positionDto.getName().trim());
+        if (position != null) {
+            if (Objects.equals(position.getName(), positionDto.getName().trim())){
+                throw new DuplicateEntityException("سمت با نام : " + positionDto.getName() + " قبلا در سیست ثبت شده است.");
+            }
+        }
         Position entity = positionMapper.toEntity(positionDto);
         Position saved = positionRepository.save(entity);
         return positionMapper.toDto(saved);
@@ -97,6 +105,12 @@ public class PositionService {
         Optional<Position> optionalPosition = positionRepository.findById(positionId);
         if (optionalPosition.isEmpty()){
             throw new EntityNotFoundException("Position with id" + positionId + " not found");
+        }
+        Position positionByNameAndIdNot = positionRepository.findPositionByNameAndIdNot(positionDto.getName().trim(), positionId);
+        if (positionByNameAndIdNot != null) {
+            if (Objects.equals(positionByNameAndIdNot.getName(), positionDto.getName().trim())){
+                throw new DuplicateEntityException("سمت با نام : " + positionDto.getName() + " قبلا در سیست ثبت شده است.");
+            }
         }
         Position positionToBeUpdate = positionMapper.partialUpdate(positionDto, optionalPosition.get());
         Position updated = positionRepository.save(positionToBeUpdate);

@@ -4,9 +4,13 @@ package com.pishgaman.phonebook.services;
 import com.pishgaman.phonebook.dtos.PersonDto;
 import com.pishgaman.phonebook.dtos.ShareholderDetailDto;
 import com.pishgaman.phonebook.dtos.ShareholderDto;
+import com.pishgaman.phonebook.entities.Company;
+import com.pishgaman.phonebook.entities.Person;
 import com.pishgaman.phonebook.entities.Shareholder;
 import com.pishgaman.phonebook.mappers.ShareholderDetailMapper;
 import com.pishgaman.phonebook.mappers.ShareholderMapper;
+import com.pishgaman.phonebook.repositories.CompanyRepository;
+import com.pishgaman.phonebook.repositories.PersonRepository;
 import com.pishgaman.phonebook.repositories.ShareholderRepository;
 import com.pishgaman.phonebook.searchforms.ShareholderSearchForm;
 import com.pishgaman.phonebook.security.user.UserRepository;
@@ -22,6 +26,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -40,6 +45,8 @@ public class ShareHolderService {
     private final ShareholderDetailMapper shareholderDetailMapper;
     private final DateConvertor dateConvertor;
     private final UserRepository userRepository;
+    private final PersonRepository personRepository;
+    private final CompanyRepository companyRepository;
 
     private String getFullName(Integer userId) {
         if (userId == null) return "نامشخص";
@@ -87,7 +94,7 @@ public class ShareHolderService {
     private Shareholder findShareHolderById(Long ShareHolderId) {
         Optional<Shareholder> optionalShareHolder = shareHolderRepository.findById(ShareHolderId);
         if (optionalShareHolder.isEmpty()) {
-            throw new EntityNotFoundException("مشتری با شناسه : " + ShareHolderId + " یافت نشد.");
+            throw new EntityNotFoundException("سهارمدار با شناسه : " + ShareHolderId + " یافت نشد.");
         }
         return optionalShareHolder.get();
     }
@@ -122,12 +129,51 @@ public class ShareHolderService {
         Shareholder saved = shareHolderRepository.save(entity);
         return shareHolderMapper.toDto(saved);
     }
-
+    @Transactional
     public ShareholderDto updateShareHolder(Long shareHolderId, ShareholderDto shareholderDto) {
-        Shareholder ShareHolderById = findShareHolderById(shareHolderId);
-
-        Shareholder ShareHolderToBeUpdate = shareHolderMapper.partialUpdate(shareholderDto , ShareHolderById);
-        Shareholder updated = shareHolderRepository.save(ShareHolderToBeUpdate);
+        Shareholder shareholder = findShareHolderById(shareHolderId);
+        shareholder.setCompany( companyRepository.findById(shareholderDto.getCompanyId())
+                .orElseThrow(() -> new EntityNotFoundException("Company not found with id: " + shareholderDto.getCompanyId())));
+        shareholder.setPerson( personRepository.findById(shareholderDto.getPersonId())
+                .orElseThrow(() -> new EntityNotFoundException("Person not found with id: " + shareholderDto.getPersonId())));
+        if ( shareholderDto.getCreatedBy() != null ) {
+            shareholder.setCreatedBy( shareholderDto.getCreatedBy() );
+        }
+        if ( shareholderDto.getLastModifiedBy() != null ) {
+            shareholder.setLastModifiedBy( shareholderDto.getLastModifiedBy() );
+        }
+        if ( shareholderDto.getCreatedDate() != null ) {
+            shareholder.setCreatedDate( shareholderDto.getCreatedDate() );
+        }
+        if ( shareholderDto.getLastModifiedDate() != null ) {
+            shareholder.setLastModifiedDate( shareholderDto.getLastModifiedDate() );
+        }
+        if ( shareholderDto.getId() != null ) {
+            shareholder.setId( shareholderDto.getId() );
+        }
+        if ( shareholderDto.getNumberOfShares() != null ) {
+            shareholder.setNumberOfShares( shareholderDto.getNumberOfShares() );
+        }
+        if ( shareholderDto.getPercentageOwnership() != null ) {
+            shareholder.setPercentageOwnership( shareholderDto.getPercentageOwnership() );
+        }
+        if ( shareholderDto.getSharePrice() != null ) {
+            shareholder.setSharePrice( shareholderDto.getSharePrice() );
+        }
+        if ( shareholderDto.getShareType() != null ) {
+            shareholder.setShareType( shareholderDto.getShareType() );
+        }
+        byte[] scannedShareCertificate = shareholderDto.getScannedShareCertificate();
+        if ( scannedShareCertificate != null ) {
+            shareholder.setScannedShareCertificate( Arrays.copyOf( scannedShareCertificate, scannedShareCertificate.length ) );
+        }
+        if ( shareholderDto.getFileName() != null ) {
+            shareholder.setFileName( shareholderDto.getFileName() );
+        }
+        if ( shareholderDto.getFileExtension() != null ) {
+            shareholder.setFileExtension( shareholderDto.getFileExtension() );
+        }
+        Shareholder updated = shareHolderRepository.save(shareholder);
         return shareHolderMapper.toDto(updated);
     }
 
